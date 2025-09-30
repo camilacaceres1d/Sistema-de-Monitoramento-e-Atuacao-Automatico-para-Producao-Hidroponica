@@ -1,47 +1,25 @@
-#include <Arduino.h>
+#include "./sensors.hpp"
 
-const float a = -4.2537;
-const float b = 17.4943;
-
-int buf[10];
+float read_ph(uint8_t pin, float a, float b);
+float read_ec(uint8_t pin, float temperature);
 
 void setup() {
   Serial.begin(115200);
+  pinMode(TdsSensorPin, INPUT);
   analogReadResolution(12);
   delay(500);
 }
 
 void loop() {
-  for (int i = 0; i < 10; i++) {
-    buf[i] = analogRead(32);
-    delay(10);
-  }
 
-  for (int i = 0; i < 9; i++) {
-    for (int j = i + 1; j < 10; j++) {
-      if (buf[i] > buf[j]) {
-        int temp = buf[i];
-        buf[i] = buf[j];
-        buf[j] = temp;
-      }
-    }
-  }
+  float ph = read_ph(32, PH_CALIBRATION_A, PH_CALIBRATION_B);
+  float ec = read_ec(27, 20);
 
-  int valorMedio = 0;
-  for (int i = 2; i < 8; i++) {
-    valorMedio += buf[i];
-  }
-
-  float m = (valorMedio * 3.3) / 4095.0 / 6;
-
-  float ph = a * m + b; // reta do pH
-
-  Serial.print("Tensão: ");
-  Serial.print(m, 3);
-  Serial.print("V");
-
-  Serial.print(" | pH: ");
+  Serial.print("pH: ");
   Serial.println(ph, 2);
+
+  Serial.print("ec: ");
+  Serial.println(ec, 2);
 
   delay(1000);
 }
