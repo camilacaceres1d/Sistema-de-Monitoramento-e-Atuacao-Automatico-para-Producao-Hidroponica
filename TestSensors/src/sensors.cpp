@@ -1,12 +1,11 @@
 #include "./sensors.hpp"
-#include <cstdint>
 
 int buf[10];
 
 float read_ph(uint8_t pin, float a, float b) {
 
   for (int i = 0; i < 10; i++) {
-    buf[i] = analogRead(32);
+    buf[i] = analogRead(pin);
     delay(10);
   }
 
@@ -52,7 +51,7 @@ float read_ec(uint8_t pin, float temperature) {
   int median = (SCOUNT & 1) ? buffer[SCOUNT / 2]
                             : (buffer[SCOUNT / 2] + buffer[SCOUNT / 2 - 1]) / 2;
 
-  float voltage = median * (VREF / 1024.0);
+  float voltage = median * (VREF / 4095.0);
 
   float coeff = 1.0 + 0.02 * (temperature - 25.0);
   float compVoltage = voltage / coeff;
@@ -61,3 +60,5 @@ float read_ec(uint8_t pin, float temperature) {
           255.86 * compVoltage * compVoltage + 857.39 * compVoltage) *
          0.5;
 }
+
+bool read_water_presence(uint8_t pin) { return digitalRead(pin) == HIGH; }

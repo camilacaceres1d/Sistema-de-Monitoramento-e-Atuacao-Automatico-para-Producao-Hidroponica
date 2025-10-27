@@ -1,25 +1,45 @@
 #include "./sensors.hpp"
 
-float read_ph(uint8_t pin, float a, float b);
-float read_ec(uint8_t pin, float temperature);
+#include <DallasTemperature.h>
+#include <OneWire.h>
+
+OneWire oneWire(TEMP_SENSOR_PIN);
+DallasTemperature tempSensor(&oneWire);
 
 void setup() {
   Serial.begin(115200);
-  pinMode(TdsSensorPin, INPUT);
+  pinMode(TDS_SENSOR_PIN, INPUT);
+  pinMode(PH_SENSOR_PIN, INPUT);
+  pinMode(LEVEL0_SENSOR_PIN, INPUT);
+  pinMode(LEVEL1_SENSOR_PIN, INPUT);
+  pinMode(LEVEL2_SENSOR_PIN, INPUT);
   analogReadResolution(12);
-  delay(500);
+  tempSensor.begin();
+  delay(1000);
 }
-
 void loop() {
+  float ph = read_ph(PH_SENSOR_PIN, PH_CALIBRATION_A, PH_CALIBRATION_B);
 
-  float ph = read_ph(32, PH_CALIBRATION_A, PH_CALIBRATION_B);
-  float ec = read_ec(27, 20);
+  tempSensor.requestTemperatures();
+  float tempC = tempSensor.getTempCByIndex(0);
+  float ec = read_ec(TDS_SENSOR_PIN, tempC);
+  bool level0 = read_water_presence(LEVEL0_SENSOR_PIN);
+  bool level1 = read_water_presence(LEVEL1_SENSOR_PIN);
+  bool level2 = read_water_presence(LEVEL2_SENSOR_PIN);
 
   Serial.print("pH: ");
-  Serial.println(ph, 2);
+  Serial.print(ph);
+  Serial.print(" | EC: ");
+  Serial.print(ec);
+  Serial.print(" | Temp: ");
+  Serial.print(tempC);
+  Serial.print(" | Level0: ");
+  Serial.print(level0);
+  Serial.print(" | Level1: ");
+  Serial.print(level1);
+  Serial.print(" | Level2: ");
+  Serial.println(level2);
 
-  Serial.print("ec: ");
-  Serial.println(ec, 2);
-
+  delay(1000);
   delay(1000);
 }
