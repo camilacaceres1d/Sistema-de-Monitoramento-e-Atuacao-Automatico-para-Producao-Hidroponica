@@ -1,6 +1,13 @@
 #pragma once
 #include <Arduino.h>
 
+#define WIFI_SSID "NET_2G4B4C9B"
+#define WIFI_PASSWORD "4F4B4C9B"
+#define MQTT_HOST "hidroponia.local"
+#define MQTT_PORT 1883
+#define MQTT_USER "hidroponia"
+#define MQTT_PASSWORD "Hidroponia@123"
+
 #define PUMP_PIN 23
 #define PH_CALIBRATION_A -4.2537
 #define PH_CALIBRATION_B 17.4943

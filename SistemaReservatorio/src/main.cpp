@@ -1,4 +1,5 @@
 #include <config.hpp>
+#include <mqtt_comm.hpp>
 #include <sensors_actuators.hpp>
 
 void setup() {
@@ -7,10 +8,12 @@ void setup() {
   analogReadResolution(12);
   sensors_init();
 
+  network_mqtt_setup();
   delay(500);
 }
 
 void loop() {
+  network_mqtt_loop();
 
   static unsigned long lastRead = 0;
   if (millis() - lastRead >= 5000) {
@@ -39,6 +42,8 @@ void loop() {
     Serial.print(level2);
     Serial.print(" | Pump: ");
     Serial.println(get_pump_state() ? "ON" : "OFF");
+    mqtt_publish_sensors(ph, ec, tempNow, level0, level1, level2,
+                         get_pump_state());
     lastRead = millis();
   }
 }
