@@ -6,8 +6,12 @@
 OneWire oneWire(TEMP_SENSOR_PIN);
 DallasTemperature tempSensor(&oneWire);
 
+bool bombaStatus = false;
+
 void setup() {
   Serial.begin(115200);
+  pinMode(23, OUTPUT);
+  digitalWrite(23, HIGH);
   pinMode(TDS_SENSOR_PIN, INPUT);
   pinMode(PH_SENSOR_PIN, INPUT);
   pinMode(LEVEL0_SENSOR_PIN, INPUT);
@@ -41,5 +45,13 @@ void loop() {
   Serial.println(level2);
 
   delay(1000);
-  delay(1000);
+
+  static unsigned long lastMillis = 0;
+  if (millis() - lastMillis >= 120000) {
+    digitalWrite(23, bombaStatus ? LOW : HIGH);
+    bombaStatus = !bombaStatus;
+    Serial.print("Bomba: ");
+    Serial.println(bombaStatus ? "OFF" : "ON");
+    lastMillis = millis();
+  }
 }
