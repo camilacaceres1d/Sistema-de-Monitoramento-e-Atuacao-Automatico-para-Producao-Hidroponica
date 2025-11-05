@@ -15,7 +15,8 @@ defmodule SistemaControle.Application do
       # Start a worker by calling: SistemaControle.Worker.start_link(arg)
       # {SistemaControle.Worker, arg},
       # Start to serve requests, typically the last entry
-      SistemaControleWeb.Endpoint
+      SistemaControleWeb.Endpoint,
+      SistemaControle.MqttClient
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

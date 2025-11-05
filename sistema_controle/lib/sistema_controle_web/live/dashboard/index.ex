@@ -5,5 +5,4 @@ defmodule SistemaControleWeb.Dashboard.Index do
   def mount(_params, _session, socket) do
     {:ok, socket}
   end
-
 end
