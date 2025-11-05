@@ -1,0 +1,20 @@
+services:
+  database:
+    image: postgres:15-alpine
+    container_name: hidroponia_db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-hidroponia_db}
+      POSTGRES_USER: ${POSTGRES_USER:-hidroponia_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hidroponia_user} -d ${POSTGRES_DB:-hidroponia_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db_data:
