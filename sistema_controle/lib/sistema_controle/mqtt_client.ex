@@ -72,7 +72,23 @@ defmodule SistemaControle.MqttClient do
 
   @impl true
   def handle_info({:publish, %{topic: topic, payload: payload}}, state) do
-    Logger.info("Received message on topic #{topic}: #{payload}")
+    try do
+      case String.split(topic, "/") do
+        ["greenhouse", device_mac, "sensors"] ->
+          SistemaControle.Sensors.handle_sensor_message(payload)
+
+        ["bench", device_mac, "sensors"] ->
+          SistemaControle.Sensors.handle_sensor_message(payload)
+
+        _ ->
+          Logger.warning("Invalid topic format: #{topic}")
+      end
+    rescue
+      error ->
+        Logger.error("Error processing mqtt message: #{inspect(error)}")
+        Logger.error("Topic: #{topic}, Payload: #{payload}")
+    end
+
     {:noreply, state}
   end
 
