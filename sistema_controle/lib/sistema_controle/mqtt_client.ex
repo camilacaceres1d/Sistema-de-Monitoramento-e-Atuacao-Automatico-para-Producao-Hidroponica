@@ -75,10 +75,10 @@ defmodule SistemaControle.MqttClient do
     try do
       case String.split(topic, "/") do
         ["greenhouse", device_mac, "sensors"] ->
-          SistemaControle.Sensors.handle_sensor_message(payload)
+          SistemaControle.Sensors.handle_sensor_message(:greenhouse, payload, device_mac)
 
         ["bench", device_mac, "sensors"] ->
-          SistemaControle.Sensors.handle_sensor_message(payload)
+          SistemaControle.Sensors.handle_sensor_message(:bench, payload, device_mac)
 
         _ ->
           Logger.warning("Invalid topic format: #{topic}")

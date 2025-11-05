@@ -4,15 +4,17 @@ defmodule SistemaControleWeb.Dashboard.Index do
   @impl true
   def mount(_params, _session, socket) do
     if connected?(socket) do
-      SistemaControle.Sensors.subscribe_all()
+      SistemaControle.Devices.subscribe_device_all()
     end
 
-    sensor_data = SistemaControle.Sensors.get_all_sensor_data()
-    {:ok, socket |> stream(:sensor_data, sensor_data)}
+    greenhouses = SistemaControle.Devices.get_all_greenhouses()
+
+    IO.inspect(greenhouses, label: "Greenhouses")
+    {:ok, socket |> stream(:greenhouses, greenhouses)}
   end
 
   @impl true
-  def handle_info({:new_sensor_data, sensor_data}, socket) do
-    {:noreply, socket |> stream_insert(:sensor_data, sensor_data, at: 0)}
+  def handle_info({:new_device, greenhouse}, socket) do
+    {:noreply, socket |> stream_insert(:greenhouses, greenhouse, at: 0)}
   end
 end

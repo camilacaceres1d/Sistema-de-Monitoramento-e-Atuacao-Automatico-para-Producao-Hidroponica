@@ -14,6 +14,7 @@ defmodule SistemaControle.Schemas.SensorData do
     field :level1, :boolean
     field :level2, :boolean
     field :pump_state, :boolean
+    field :device_id, :id
     timestamps()
   end
 
@@ -30,8 +31,9 @@ defmodule SistemaControle.Schemas.SensorData do
       :level0,
       :level1,
       :level2,
-      :pump_state
+      :pump_state,
+      :device_id
     ])
-    |> validate_required([])
+    |> validate_required([:device_id])
   end
 end

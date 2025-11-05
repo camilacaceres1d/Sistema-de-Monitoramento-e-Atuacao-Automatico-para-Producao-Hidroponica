@@ -1,0 +1,32 @@
+<Layouts.app flash={@flash}>
+  Sistema de Monitoramento de Hidroponia {@device.name} - {@device.device_mac}
+  <.table id="sensor-data-table" rows={@streams.sensor_data}>
+    <:col :let={{_id, data}} label="PH">
+      <span>{data.ph}</span>
+    </:col>
+    <:col :let={{_id, data}} label="Condutividade">
+      <span>{data.ec}</span>
+    </:col>
+    <:col :let={{_id, data}} label="Temperatura">
+      <span>{data.water_temperature}</span>
+    </:col>
+
+    <:col :let={{_id, data}} label="Pump State">
+      <span>{data.pump_state}</span>
+    </:col>
+
+    <:col :let={{_id, data}} label="Level0">
+      <span>{data.level0}</span>
+    </:col>
+    <:col :let={{_id, data}} label="Level1">
+      <span>{data.level1}</span>
+    </:col>
+    <:col :let={{_id, data}} label="Level2">
+      <span>{data.level2}</span>
+    </:col>
+    <:col :let={{_id, data}} label="Air temp"><span>{data.air_temperature}</span></:col>
+
+    <:col :let={{_id, data}} label="Air humidity"><span>{data.air_humidity}</span></:col>
+    <:col :let={{_id, data}} label="Water Flow"><span>{data.water_flow}</span></:col>
+  </.table>
+</Layouts.app>

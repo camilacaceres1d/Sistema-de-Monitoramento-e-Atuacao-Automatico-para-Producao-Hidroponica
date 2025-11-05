@@ -18,6 +18,7 @@ defmodule SistemaControleWeb.Router do
     pipe_through :browser
 
     live "/", Dashboard.Index, :index
+    live "/devices/:id", Device.Index, :index
   end
 
   # Other scopes may use custom stacks.
