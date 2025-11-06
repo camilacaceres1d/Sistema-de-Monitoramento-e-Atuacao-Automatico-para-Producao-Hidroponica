@@ -29,13 +29,6 @@ defmodule SistemaControle.Devices do
   end
 
   @doc """
-    Get all greenhouses
-  """
-  def get_all_greenhouses() do
-    Repo.all(from d in Device, where: d.type == :greenhouse)
-  end
-
-  @doc """
     Get a device by device MAC address
   """
   def get_device_by_mac(device_mac) do
@@ -50,9 +43,18 @@ defmodule SistemaControle.Devices do
       nil ->
         device = create_device(%{device_mac: device_mac, type: type})
         broadcast_device_all({:new_device, device})
+
+        if type == :greenhouse do
+          SistemaControle.Greenhouse.create_if_not_exists(device.id)
+        end
+
         device
 
       device ->
+        if type == :greenhouse do
+          SistemaControle.Greenhouse.create_if_not_exists(device.id)
+        end
+
         broadcast(device.id, {:device_updated, device})
         {:ok, device}
     end

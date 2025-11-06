@@ -3,6 +3,7 @@ defmodule SistemaControleWeb.Device.Index do
 
   alias SistemaControle.Devices
   alias SistemaControle.Sensors
+  alias SistemaControle.Greenhouse
 
   @impl true
   def mount(%{"id" => device_id}, _session, socket) do
@@ -13,11 +14,19 @@ defmodule SistemaControleWeb.Device.Index do
     device = Devices.get_device_by_id(device_id)
     pump_state = Sensors.get_last_pump_state(device_id)
     sensor_data = Sensors.get_sensor_data_by_device(device_id)
+    greenhouse_config = Greenhouse.get_greenhouse_config(device_id)
+    changeset = Greenhouse.change_greenhouse_config(greenhouse_config || %{})
 
     {:ok,
      socket
      |> stream(:sensor_data, sensor_data)
-     |> assign(device: device, pump_state: pump_state, pump_loading: false)}
+     |> assign(
+       device: device,
+       pump_state: pump_state,
+       pump_loading: false,
+       greenhouse_config: greenhouse_config,
+       form: to_form(changeset, as: :config_form)
+     )}
   end
 
   @impl true
@@ -33,6 +42,25 @@ defmodule SistemaControleWeb.Device.Index do
 
       Devices.send_pump_command(socket.assigns.device.device_mac, sendState)
       {:noreply, socket |> assign(pump_loading: true)}
+    end
+  end
+
+  def handle_event("save_config", %{"config_form" => config_params}, socket) do
+    case Greenhouse.update(
+           socket.assigns.greenhouse_config,
+           config_params
+         ) do
+      {:ok, updated_config} ->
+        {:noreply,
+         socket
+         |> assign(greenhouse_config: updated_config)
+         |> put_flash(:info, "Configurações salvas com sucesso.")}
+
+      {:error, changeset} ->
+        {:noreply,
+         socket
+         |> assign(form: to_form(changeset, as: :config_form))
+         |> put_flash(:error, "Erro ao salvar configurações.")}
     end
   end
 

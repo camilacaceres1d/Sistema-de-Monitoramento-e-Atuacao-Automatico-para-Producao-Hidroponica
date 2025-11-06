@@ -14,7 +14,8 @@ defmodule SistemaControle.Schemas.SensorData do
     field :level1, :boolean
     field :level2, :boolean
     field :pump_state, :boolean
-    field :device_id, :id
+
+    belongs_to :device, SistemaControle.Schemas.Device
     timestamps()
   end
 

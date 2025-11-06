@@ -7,7 +7,7 @@ defmodule SistemaControleWeb.Dashboard.Index do
       SistemaControle.Devices.subscribe_device_all()
     end
 
-    greenhouses = SistemaControle.Devices.get_all_greenhouses()
+    greenhouses = SistemaControle.Greenhouse.get_all()
 
     IO.inspect(greenhouses, label: "Greenhouses")
     {:ok, socket |> stream(:greenhouses, greenhouses)}

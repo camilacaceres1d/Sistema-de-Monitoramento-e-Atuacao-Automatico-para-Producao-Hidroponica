@@ -1,12 +1,12 @@
 <Layouts.app flash={@flash}>
-  <h2 class="text-xl font-semibold mb-6">
+  <h1 class="text-2xl font-semibold mb-6">
     Sistema de Monitoramento de Hidroponia — {@device.name} ({@device.device_mac})
-  </h2>
+  </h1>
   <.button
     phx-click="toggle_pump"
     phx-value-state={if @pump_state, do: "false", else: "true"}
     class={
-    "mb-6 px-6 py-3 rounded-lg text-white font-medium transition-colors hover:cursor-pointer " <>
+    "btn text-white rounded-lg " <>
       if(@pump_state, do: "bg-red-600 hover:bg-red-700", else: "bg-green-600 hover:bg-green-700") <>
       if(@pump_loading, do: " opacity-50 pointer-events-none", else: "")
   }
@@ -14,7 +14,147 @@
     {if @pump_state, do: "Desligar Bomba", else: "Ligar Bomba"}
   </.button>
 
-  <div class="overflow-x-auto rounded-lg shadow border border-gray-200">
+  <div class="mb-8 p-6 bg-base rounded-lg shadow border border-base-200">
+    <h3 class="text-lg font-semibold mb-4">Configurações da Estufa</h3>
+
+    <.form for={@form} phx-submit="save_config">
+      <div class="flex flex-row w-full gap-4">
+        <div class="w-full">
+          <.input
+            field={@form[:name]}
+            type="text"
+            label="Nome da estufa"
+          />
+        </div>
+
+        <div class="w-full">
+          <.input field={@form[:crop_name]} type="text" label="Nome do Cultivo" />
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <.input
+            field={@form[:min_water_temp]}
+            type="number"
+            step="0.1"
+            label="Temperatura da Água Mínima (°C)"
+          />
+        </div>
+        <div>
+          <.input
+            field={@form[:ideal_water_temp]}
+            type="number"
+            step="0.1"
+            label="Temperatura da Água Ideal (°C)"
+          />
+        </div>
+        <div>
+          <.input
+            field={@form[:max_water_temp]}
+            type="number"
+            step="0.1"
+            label="Temperatura da Água Máxima (°C)"
+          />
+        </div>
+
+        <div>
+          <.input
+            field={@form[:min_air_temp]}
+            type="number"
+            step="0.1"
+            label="Temperatura Mínima (°C)"
+          />
+        </div>
+        <div>
+          <.input
+            field={@form[:ideal_air_temp]}
+            type="number"
+            step="0.1"
+            label="Temperatura Ideal (°C)"
+          />
+        </div>
+        <div>
+          <.input
+            field={@form[:max_air_temp]}
+            type="number"
+            step="0.1"
+            label="Temperatura Máxima (°C)"
+          />
+        </div>
+
+        <div>
+          <.input
+            field={@form[:min_air_humidity]}
+            type="number"
+            step="0.1"
+            label="Umidade Mínima (%)"
+          />
+        </div>
+        <div>
+          <.input
+            field={@form[:ideal_air_humidity]}
+            type="number"
+            step="0.1"
+            label="Umidade Ideal (%)"
+          />
+        </div>
+        <div>
+          <.input
+            field={@form[:max_air_humidity]}
+            type="number"
+            step="0.1"
+            label="Umidade Máxima (%)"
+          />
+        </div>
+
+        <div>
+          <.input field={@form[:min_ph]} type="number" step="0.1" label="pH Mínimo" />
+        </div>
+        <div>
+          <.input field={@form[:ideal_ph]} type="number" step="0.1" label="pH Ideal" />
+        </div>
+        <div>
+          <.input field={@form[:max_ph]} type="number" step="0.1" label="pH Máximo" />
+        </div>
+
+        <div>
+          <.input
+            field={@form[:min_ec]}
+            type="number"
+            step="0.01"
+            label="Condutividade Mínima (mS/cm)"
+          />
+        </div>
+        <div>
+          <.input
+            field={@form[:ideal_ec]}
+            type="number"
+            step="0.01"
+            label="Condutividade Ideal (mS/cm)"
+          />
+        </div>
+        <div>
+          <.input
+            field={@form[:max_ec]}
+            type="number"
+            step="0.01"
+            label="Condutividade Máxima (mS/cm)"
+          />
+        </div>
+
+        <div class="col-span-full flex justify-end">
+          <.button
+            type="submit"
+            class="btn btn-primary"
+          >
+            Salvar Configurações
+          </.button>
+        </div>
+      </div>
+    </.form>
+  </div>
+
+  <div class="overflow-x-auto rounded-lg shadow border border-base-200">
     <.table id="sensor-data-table" rows={@streams.sensor_data}>
       <:col :let={{_id, data}} label="pH">
         <span>{data.ph}</span>

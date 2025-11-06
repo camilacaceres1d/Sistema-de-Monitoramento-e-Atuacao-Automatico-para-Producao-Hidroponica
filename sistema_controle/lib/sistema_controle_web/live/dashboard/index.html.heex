@@ -1,15 +1,24 @@
 <Layouts.app flash={@flash}>
-  Sistema de Monitoramento de Hidroponia
-  <.table
-    id="greenhouses-table"
-    rows={@streams.greenhouses}
-    row_click={fn {_id, device} -> JS.navigate(~p"/devices/#{device.id}") end}
-  >
-    <:col :let={{_id, greenhouse}} label="MAC">
-      <span>{greenhouse.device_mac}</span>
-    </:col>
-    <:col :let={{_id, greenhouse}} label="Nome">
-      <span>{greenhouse.name}</span>
-    </:col>
-  </.table>
+  <h1 class="text-2xl font-semibold mb-6">
+    Sistema de Monitoramento de Hidroponia
+  </h1>
+
+  <div class="bg-base shadow rounded-xl border border-base-200 overflow-hidden">
+    <.table
+      id="greenhouses-table"
+      rows={@streams.greenhouses}
+    >
+      <:col :let={{_id, greenhouse}} label="Nome da Estufa">
+        <span class="font-medium">{greenhouse.name}</span>
+      </:col>
+      <:col :let={{_id, greenhouse}} label="Dispositivo">
+        <span class="font-medium">{greenhouse.device.device_mac}</span>
+      </:col>
+      <:action :let={{_id, greenhouse}}>
+        <.button phx-click={JS.navigate(~p"/devices/#{greenhouse.device.id}")}>
+          <.icon name="hero-magnifying-glass" class="h-5 w-5" />
+        </.button>
+      </:action>
+    </.table>
+  </div>
 </Layouts.app>
