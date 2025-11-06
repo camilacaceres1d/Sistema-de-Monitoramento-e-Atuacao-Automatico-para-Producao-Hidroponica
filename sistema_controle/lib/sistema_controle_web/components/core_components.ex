@@ -150,7 +150,7 @@ defmodule SistemaControleWeb.CoreComponents do
   attr :type, :string,
     default: "text",
     values: ~w(checkbox color date datetime-local email file month number password
-               search select tel text textarea time url week)
+               search select tel text textarea time url week multi-select)
 
   attr :field, Phoenix.HTML.FormField,
     doc: "a form field struct retrieved from the form, for example: @form[:email]"
@@ -221,6 +221,29 @@ defmodule SistemaControleWeb.CoreComponents do
           {Phoenix.HTML.Form.options_for_select(@options, @value)}
         </select>
       </label>
+      <.error :for={msg <- @errors}>{msg}</.error>
+    </div>
+    """
+  end
+
+  def input(%{type: "multi-select"} = assigns) do
+    ~H"""
+    <div class="fieldset mb-2">
+      <label :if={@label} class="label mb-1">{@label}</label>
+      <div class="flex flex-wrap gap-3">
+        <%= for {label, value} <- @options do %>
+          <label class="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name={@name <> "[]"}
+              value={value}
+              checked={value in List.wrap(@value)}
+              class="checkbox checkbox-sm"
+            />
+            <span>{label}</span>
+          </label>
+        <% end %>
+      </div>
       <.error :for={msg <- @errors}>{msg}</.error>
     </div>
     """

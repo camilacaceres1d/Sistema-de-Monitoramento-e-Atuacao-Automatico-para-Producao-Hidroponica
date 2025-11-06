@@ -17,24 +17,24 @@
   <div class="mb-8 p-6 bg-base rounded-lg shadow border border-base-200">
     <h3 class="text-lg font-semibold mb-4">Configurações da Estufa</h3>
 
-    <.form for={@form} phx-submit="save_config">
+    <.form for={@form_config} phx-submit="save_config">
       <div class="flex flex-row w-full gap-4">
         <div class="w-full">
           <.input
-            field={@form[:name]}
+            field={@form_config[:name]}
             type="text"
             label="Nome da estufa"
           />
         </div>
 
         <div class="w-full">
-          <.input field={@form[:crop_name]} type="text" label="Nome do Cultivo" />
+          <.input field={@form_config[:crop_name]} type="text" label="Nome do Cultivo" />
         </div>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <.input
-            field={@form[:min_water_temp]}
+            field={@form_config[:min_water_temp]}
             type="number"
             step="0.1"
             label="Temperatura da Água Mínima (°C)"
@@ -42,7 +42,7 @@
         </div>
         <div>
           <.input
-            field={@form[:ideal_water_temp]}
+            field={@form_config[:ideal_water_temp]}
             type="number"
             step="0.1"
             label="Temperatura da Água Ideal (°C)"
@@ -50,7 +50,7 @@
         </div>
         <div>
           <.input
-            field={@form[:max_water_temp]}
+            field={@form_config[:max_water_temp]}
             type="number"
             step="0.1"
             label="Temperatura da Água Máxima (°C)"
@@ -59,7 +59,7 @@
 
         <div>
           <.input
-            field={@form[:min_air_temp]}
+            field={@form_config[:min_air_temp]}
             type="number"
             step="0.1"
             label="Temperatura Mínima (°C)"
@@ -67,7 +67,7 @@
         </div>
         <div>
           <.input
-            field={@form[:ideal_air_temp]}
+            field={@form_config[:ideal_air_temp]}
             type="number"
             step="0.1"
             label="Temperatura Ideal (°C)"
@@ -75,7 +75,7 @@
         </div>
         <div>
           <.input
-            field={@form[:max_air_temp]}
+            field={@form_config[:max_air_temp]}
             type="number"
             step="0.1"
             label="Temperatura Máxima (°C)"
@@ -84,7 +84,7 @@
 
         <div>
           <.input
-            field={@form[:min_air_humidity]}
+            field={@form_config[:min_air_humidity]}
             type="number"
             step="0.1"
             label="Umidade Mínima (%)"
@@ -92,7 +92,7 @@
         </div>
         <div>
           <.input
-            field={@form[:ideal_air_humidity]}
+            field={@form_config[:ideal_air_humidity]}
             type="number"
             step="0.1"
             label="Umidade Ideal (%)"
@@ -100,7 +100,7 @@
         </div>
         <div>
           <.input
-            field={@form[:max_air_humidity]}
+            field={@form_config[:max_air_humidity]}
             type="number"
             step="0.1"
             label="Umidade Máxima (%)"
@@ -108,18 +108,18 @@
         </div>
 
         <div>
-          <.input field={@form[:min_ph]} type="number" step="0.1" label="pH Mínimo" />
+          <.input field={@form_config[:min_ph]} type="number" step="0.1" label="pH Mínimo" />
         </div>
         <div>
-          <.input field={@form[:ideal_ph]} type="number" step="0.1" label="pH Ideal" />
+          <.input field={@form_config[:ideal_ph]} type="number" step="0.1" label="pH Ideal" />
         </div>
         <div>
-          <.input field={@form[:max_ph]} type="number" step="0.1" label="pH Máximo" />
+          <.input field={@form_config[:max_ph]} type="number" step="0.1" label="pH Máximo" />
         </div>
 
         <div>
           <.input
-            field={@form[:min_ec]}
+            field={@form_config[:min_ec]}
             type="number"
             step="0.01"
             label="Condutividade Mínima (mS/cm)"
@@ -127,7 +127,7 @@
         </div>
         <div>
           <.input
-            field={@form[:ideal_ec]}
+            field={@form_config[:ideal_ec]}
             type="number"
             step="0.01"
             label="Condutividade Ideal (mS/cm)"
@@ -135,7 +135,7 @@
         </div>
         <div>
           <.input
-            field={@form[:max_ec]}
+            field={@form_config[:max_ec]}
             type="number"
             step="0.01"
             label="Condutividade Máxima (mS/cm)"
@@ -152,6 +152,131 @@
         </div>
       </div>
     </.form>
+  </div>
+
+  <div class="mb-8 p-6 bg-base rounded-lg shadow border border-base-200">
+    <h3 class="text-lg font-semibold mb-4">Configurações da Estufa</h3>
+    <.form
+      for={@irrigation_schedule_form}
+      phx-submit={if @is_edit, do: "edit_irrigation_schedule", else: "add_irrigation_schedule"}
+      class="mb-6"
+    >
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="w-full">
+          <.input
+            field={@irrigation_schedule_form[:start_time]}
+            type="time"
+            label="Hora de Início"
+          />
+        </div>
+        <div class="w-full">
+          <.input
+            field={@irrigation_schedule_form[:end_time]}
+            type="time"
+            label="Hora de Fim"
+          />
+        </div>
+
+        <div class="w-full">
+          <.input
+            field={@irrigation_schedule_form[:on_seconds]}
+            type="number"
+            label="Duração ligado (segundos)"
+          />
+        </div>
+
+        <div class="w-full">
+          <.input
+            field={@irrigation_schedule_form[:off_seconds]}
+            type="number"
+            label="Duração desligado (segundos)"
+          />
+        </div>
+
+        <div class="w-full">
+          <.input
+            field={@irrigation_schedule_form[:days_of_week]}
+            type="multi-select"
+            multiple
+            label="Dias da Semana"
+            options={[
+              {"Domingo", "0"},
+              {"Segunda-feira", "1"},
+              {"Terça-feira", "2"},
+              {"Quarta-feira", "3"},
+              {"Quinta-feira", "4"},
+              {"Sexta-feira", "5"},
+              {"Sábado", "6"}
+            ]}
+          />
+        </div>
+
+        <div class="col-span-full flex justify-end">
+          <.button
+            type="submit"
+            class="btn btn-primary"
+          >
+            {if @is_edit, do: "Salvar Alterações", else: "Adicionar Agendamento"}
+          </.button>
+        </div>
+      </div>
+    </.form>
+    <%= if Enum.empty?(@irrigation_schedules) do %>
+      <p class="my-4">Nenhum agendamento de irrigação encontrado.</p>
+    <% else %>
+      <.table id="irrgation-schedule-table" rows={@irrigation_schedules}>
+        <:col :let={schedule} label="Início">
+          <span>{schedule.start_time}</span>
+        </:col>
+        <:col :let={schedule} label="Fim">
+          <span>{schedule.end_time}</span>
+        </:col>
+        <:col :let={schedule} label="Tempo ligado (sec)">
+          <span>{schedule.on_seconds}</span>
+        </:col>
+        <:col :let={schedule} label="Tempo desligado (sec)">
+          <span>{schedule.off_seconds}</span>
+        </:col>
+        <:col :let={schedule} label="Dias da Semana">
+          <span>
+            {Enum.map_join(schedule.days_of_week, ", ", fn day ->
+              case day do
+                0 -> "Domingo"
+                1 -> "Segunda-feira"
+                2 -> "Terça-feira"
+                3 -> "Quarta-feira"
+                4 -> "Quinta-feira"
+                5 -> "Sexta-feira"
+                6 -> "Sábado"
+              end
+            end)}
+          </span>
+        </:col>
+
+        <:action :let={schedule}>
+          <.button
+            phx-click="open_edit_irrigation_schedule"
+            phx-value-id={schedule.id}
+            class="btn btn-sm btn-secondary"
+          >
+            Editar
+          </.button>
+        </:action>
+
+        <:action :let={schedule}>
+          <.button
+            phx-click="toggle_irrigation_schedule"
+            phx-value-id={schedule.id}
+            class={
+                "btn btn-sm " <>
+                  if(schedule.active, do: "btn-warning", else: "btn-success")
+              }
+          >
+            {if schedule.active, do: "Desativar", else: "Ativar"}
+          </.button>
+        </:action>
+      </.table>
+    <% end %>
   </div>
 
   <div class="overflow-x-auto rounded-lg shadow border border-base-200">

@@ -50,7 +50,7 @@ defmodule SistemaControle.Greenhouse do
 
   def update(%GreenhouseConfig{} = greenhouse_config, attrs) do
     greenhouse_config
-    |> GreenhouseConfig.changeset(attrs)
+    |> change_greenhouse_config(attrs)
     |> Repo.update()
   end
 

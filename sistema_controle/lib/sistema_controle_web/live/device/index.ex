@@ -4,6 +4,8 @@ defmodule SistemaControleWeb.Device.Index do
   alias SistemaControle.Devices
   alias SistemaControle.Sensors
   alias SistemaControle.Greenhouse
+  alias SistemaControle.Irrigation
+  alias SistemaControle.Schemas.IrrigationSchedule
 
   @impl true
   def mount(%{"id" => device_id}, _session, socket) do
@@ -17,6 +19,18 @@ defmodule SistemaControleWeb.Device.Index do
     greenhouse_config = Greenhouse.get_greenhouse_config(device_id)
     changeset = Greenhouse.change_greenhouse_config(greenhouse_config || %{})
 
+    irrigation_schedules =
+      if greenhouse_config do
+        Irrigation.get_irrigation_schedules(greenhouse_config.id)
+      else
+        []
+      end
+
+    changeset_irrigation_schedule =
+      SistemaControle.Irrigation.change_irrigation_schedule(
+        %SistemaControle.Schemas.IrrigationSchedule{}
+      )
+
     {:ok,
      socket
      |> stream(:sensor_data, sensor_data)
@@ -25,7 +39,12 @@ defmodule SistemaControleWeb.Device.Index do
        pump_state: pump_state,
        pump_loading: false,
        greenhouse_config: greenhouse_config,
-       form: to_form(changeset, as: :config_form)
+       form_config: to_form(changeset, as: :config_form),
+       irrigation_schedules: irrigation_schedules,
+       irrigation_schedule_form:
+         to_form(changeset_irrigation_schedule, as: :irrigation_schedule_form),
+       is_edit: false,
+       id_edit: nil
      )}
   end
 
@@ -59,9 +78,93 @@ defmodule SistemaControleWeb.Device.Index do
       {:error, changeset} ->
         {:noreply,
          socket
-         |> assign(form: to_form(changeset, as: :config_form))
+         |> assign(form_config: to_form(changeset, as: :config_form))
          |> put_flash(:error, "Erro ao salvar configurações.")}
     end
+  end
+
+  def handle_event(
+        "add_irrigation_schedule",
+        %{"irrigation_schedule_form" => schedule_params},
+        socket
+      ) do
+    attrs =
+      Map.put(schedule_params, "greenhouse_config_id", socket.assigns.greenhouse_config.id)
+      |> normalize_days()
+
+    case Irrigation.create_irrigation_schedule(attrs) do
+      {:ok, _schedule} ->
+        refresh_schedules(socket, "Cronograma de irrigação adicionado com sucesso")
+
+      {:error, changeset} ->
+        {:noreply,
+         socket
+         |> assign(irrigation_schedule_form: to_form(changeset, as: :irrigation_schedule_form))
+         |> put_flash(:error, "Erro ao adicionar cronograma de irrigação.")}
+    end
+  end
+
+  def handle_event(
+        "edit_irrigation_schedule",
+        %{"irrigation_schedule_form" => schedule_params},
+        socket
+      ) do
+    schedule = Irrigation.get_irrigation_schedule(socket.assigns.id_edit)
+
+    attrs = normalize_days(schedule_params)
+
+    case Irrigation.update(schedule, attrs) do
+      {:ok, _schedule} ->
+        refresh_schedules(socket, "Cronograma de irrigação atualizado com sucesso", false)
+
+      {:error, changeset} ->
+        {:noreply,
+         socket
+         |> assign(
+           irrigation_schedule_form: to_form(changeset, as: :irrigation_schedule_form),
+           is_edit: true
+         )
+         |> put_flash(:error, "Erro ao atualizar cronograma de irrigação.")}
+    end
+  end
+
+  def handle_event("toggle_irrigation_schedule", %{"id" => schedule_id}, socket) do
+    case Irrigation.toggle_irrigation_schedule_active(schedule_id) do
+      {:ok, _schedule} ->
+        updated_schedules =
+          Irrigation.get_irrigation_schedules(socket.assigns.greenhouse_config.id)
+
+        {:noreply,
+         socket
+         |> assign(irrigation_schedules: updated_schedules)
+         |> put_flash(:info, "Cronograma de irrigação atualizado com sucesso.")}
+
+      {:error, _reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Erro ao atualizar cronograma de irrigação.")}
+    end
+  end
+
+  def handle_event("open_edit_irrigation_schedule", %{"id" => schedule_id}, socket) do
+    schedule = Irrigation.get_irrigation_schedule(schedule_id)
+
+    changeset = Irrigation.change_irrigation_schedule(schedule)
+
+    days_of_week_options =
+      Enum.map(schedule.days_of_week, fn day ->
+        Integer.to_string(day)
+      end)
+
+    changeset = Ecto.Changeset.put_change(changeset, :days_of_week, days_of_week_options)
+
+    {:noreply,
+     socket
+     |> assign(
+       irrigation_schedule_form: to_form(changeset, as: :irrigation_schedule_form),
+       is_edit: true,
+       id_edit: schedule_id
+     )}
   end
 
   @impl true
@@ -77,5 +180,34 @@ defmodule SistemaControleWeb.Device.Index do
   @impl true
   def handle_info({:device_updated, sensor_data}, socket) do
     {:noreply, socket |> assign(device: sensor_data)}
+  end
+
+  def normalize_days(attrs) do
+    case Map.get(attrs, "days_of_week") do
+      nil ->
+        attrs
+
+      options ->
+        days = options |> Enum.at(0)
+        days_of_week = Enum.map(days, fn day -> String.to_integer(day) end)
+        Map.put(attrs, "days_of_week", days_of_week)
+    end
+  end
+
+  def refresh_schedules(socket, msg, is_edit \\ true) do
+    updated_schedules =
+      Irrigation.get_irrigation_schedules(socket.assigns.greenhouse_config.id)
+
+    {:noreply,
+     socket
+     |> assign(
+       irrigation_schedules: updated_schedules,
+       irrigation_schedule_form:
+         to_form(Irrigation.change_irrigation_schedule(%IrrigationSchedule{}),
+           as: :irrigation_schedule_form
+         ),
+       is_edit: is_edit
+     )
+     |> put_flash(:info, msg)}
   end
 end
