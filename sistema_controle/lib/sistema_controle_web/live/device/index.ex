@@ -38,10 +38,12 @@ defmodule SistemaControleWeb.Device.Index do
 
   @impl true
   def handle_info({:new_sensor_data, sensor_data}, socket) do
+    loading = sensor_data.pump_state != socket.assigns.pump_state
+
     {:noreply,
      socket
      |> stream_insert(:sensor_data, sensor_data, at: 0)
-     |> assign(pump_state: sensor_data.pump_state, pump_loading: false)}
+     |> assign(pump_state: sensor_data.pump_state, pump_loading: loading)}
   end
 
   @impl true

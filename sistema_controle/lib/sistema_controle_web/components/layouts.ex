@@ -39,6 +39,12 @@ defmodule SistemaControleWeb.Layouts do
       <div class="flex-none">
         <ul class="flex flex-column px-1 space-x-4 items-center">
           <li>
+            <.link href={~p"/"} class="btn btn-ghost btn-sm">
+              <.icon name="hero-home" class="size-5" />
+              <span class="ml-2 hidden sm:inline">Home</span>
+            </.link>
+          </li>
+          <li>
             <.theme_toggle />
           </li>
         </ul>
