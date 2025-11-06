@@ -1,20 +1,34 @@
 defmodule SistemaControleWeb.Dashboard.Index do
   use SistemaControleWeb, :live_view
 
+  alias SistemaControle.Greenhouse
+
   @impl true
   def mount(_params, _session, socket) do
     if connected?(socket) do
-      SistemaControle.Devices.subscribe_device_all()
+      Greenhouse.subscribe_all()
     end
 
-    greenhouses = SistemaControle.Greenhouse.get_all()
+    greenhouses =
+      Greenhouse.get_all()
+      |> Enum.map(fn item ->
+        %{
+          id: item.greenhouse.id,
+          greenhouse: item.greenhouse,
+          latest_sensor_data: item.latest_sensor_data
+        }
+      end)
 
-    IO.inspect(greenhouses, label: "Greenhouses")
     {:ok, socket |> stream(:greenhouses, greenhouses)}
   end
 
   @impl true
-  def handle_info({:new_device, greenhouse}, socket) do
+  def handle_info({:new_greenhouse, greenhouse}, socket) do
     {:noreply, socket |> stream_insert(:greenhouses, greenhouse, at: 0)}
+  end
+
+  @impl true
+  def handle_info({:greenhouse_update, greenhouse}, socket) do
+    {:noreply, socket |> stream_insert(:greenhouses, greenhouse, replace: true)}
   end
 end

@@ -2,6 +2,7 @@ defmodule SistemaControle.Sensors do
   import Ecto.Query
   alias SistemaControle.Schemas.SensorData
   alias SistemaControle.Devices
+  alias SistemaControle.Greenhouse
   alias SistemaControle.Repo
 
   @doc """
@@ -48,6 +49,7 @@ defmodule SistemaControle.Sensors do
         case create_sensor_data(sensor_data_attrs) do
           {:ok, sensor_data} ->
             Devices.broadcast(device.id, {:new_sensor_data, sensor_data})
+            Greenhouse.broadcast_update(device.id, sensor_data)
             {:ok, sensor_data}
 
           {:error, reason} ->

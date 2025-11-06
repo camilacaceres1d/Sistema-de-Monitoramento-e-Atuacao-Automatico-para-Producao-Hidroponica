@@ -1,5 +1,5 @@
 defmodule SistemaControle.Devices do
-  import Ecto.Query
+  alias SistemaControle.Greenhouse
   alias SistemaControle.Schemas.Device
   alias SistemaControle.Repo
 
@@ -42,10 +42,10 @@ defmodule SistemaControle.Devices do
     case get_device_by_mac(device_mac) do
       nil ->
         device = create_device(%{device_mac: device_mac, type: type})
-        broadcast_device_all({:new_device, device})
 
         if type == :greenhouse do
           SistemaControle.Greenhouse.create_if_not_exists(device.id)
+          Greenhouse.broadcast_new(device)
         end
 
         device

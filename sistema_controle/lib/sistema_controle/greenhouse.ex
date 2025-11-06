@@ -2,6 +2,7 @@ defmodule SistemaControle.Greenhouse do
   import Ecto.Query
   alias SistemaControle.Schemas.GreenhouseConfig
   alias SistemaControle.Schemas.Device
+  alias SistemaControle.Schemas.SensorData
   alias SistemaControle.Repo
 
   def change_greenhouse_config(%GreenhouseConfig{} = greenhouse_config, attrs \\ %{}) do
@@ -16,15 +17,30 @@ defmodule SistemaControle.Greenhouse do
   end
 
   @doc """
-    Get all greenhouses
+    Get all greenhouses with last sensor data
   """
   def get_all() do
-    Repo.all(
-      from gc in GreenhouseConfig,
-        join: d in Device,
-        on: gc.device_id == d.id,
-        preload: [device: d]
+    subquery_latest_data =
+      from(sd in SensorData,
+        distinct: sd.device_id,
+        order_by: [desc: sd.inserted_at],
+        select: %{device_id: sd.device_id, id: sd.id}
+      )
+
+    from(gc in GreenhouseConfig,
+      join: d in Device,
+      on: gc.device_id == d.id,
+      left_join: sdl in subquery(subquery_latest_data),
+      on: sdl.device_id == d.id,
+      left_join: sd in SensorData,
+      on: sd.id == sdl.id,
+      preload: [device: d],
+      select: %{
+        greenhouse: gc,
+        latest_sensor_data: sd
+      }
     )
+    |> Repo.all()
   end
 
   @doc """
@@ -85,5 +101,45 @@ defmodule SistemaControle.Greenhouse do
         IO.inspect("Greenhouse config ja existe para device_id #{device_id}")
         :ok
     end
+  end
+
+  def broadcast_new(device) do
+    case get_greenhouse_config(device.id) do
+      nil ->
+        :ok
+
+      greenhouse_config ->
+        item = %{
+          id: greenhouse_config.id,
+          greenhouse: Repo.preload(greenhouse_config, :device),
+          latest_sensor_data: nil
+        }
+
+        broadcast_all({:new_greenhouse, item})
+    end
+  end
+
+  def broadcast_update(device_id, sensor_data) do
+    case get_greenhouse_config(device_id) do
+      nil ->
+        :ok
+
+      greenhouse_config ->
+        item = %{
+          id: greenhouse_config.id,
+          greenhouse: Repo.preload(greenhouse_config, :device),
+          latest_sensor_data: sensor_data
+        }
+
+        broadcast_all({:greenhouse_update, item})
+    end
+  end
+
+  def subscribe_all() do
+    Phoenix.PubSub.subscribe(SistemaControle.PubSub, "greenhouse:all")
+  end
+
+  def broadcast_all(message) do
+    Phoenix.PubSub.broadcast(SistemaControle.PubSub, "greenhouse:all", message)
   end
 end

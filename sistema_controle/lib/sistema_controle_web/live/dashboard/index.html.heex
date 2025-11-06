@@ -8,14 +8,38 @@
       id="greenhouses-table"
       rows={@streams.greenhouses}
     >
-      <:col :let={{_id, greenhouse}} label="Nome da Estufa">
-        <span class="font-medium">{greenhouse.name}</span>
+      <:col :let={{_id, item}} label="Nome da Estufa">
+        <span class="font-medium">{item.greenhouse.name}</span>
       </:col>
-      <:col :let={{_id, greenhouse}} label="Dispositivo">
-        <span class="font-medium">{greenhouse.device.device_mac}</span>
+      <:col :let={{_id, item}} label="Cultura">
+        <span class="font-medium">{item.greenhouse.crop_name}</span>
       </:col>
-      <:action :let={{_id, greenhouse}}>
-        <.button phx-click={JS.navigate(~p"/devices/#{greenhouse.device.id}")}>
+      <:col :let={{_id, item}} label="pH">
+        <span class="font-medium">{item.latest_sensor_data.ph}</span>
+      </:col>
+      <:col :let={{_id, item}} label="Temperatura da Água">
+        <span class="font-medium">{item.latest_sensor_data.water_temperature}</span>
+      </:col>
+      <:col :let={{_id, item}} label="EC">
+        <span class="font-medium">{item.latest_sensor_data.ec}</span>
+      </:col>
+      <:col :let={{_id, item}} label="Temperatura do Ar">
+        <span class="font-medium">{item.latest_sensor_data.air_temperature}</span>
+      </:col>
+      <:col :let={{_id, item}} label="Umidade do Ar">
+        <span class="font-medium">{item.latest_sensor_data.air_humidity}</span>
+      </:col>
+      <:col :let={{_id, item}} label="Estado da Bomba">
+        <span class={[
+          "font-semibold",
+          if(item.latest_sensor_data.pump_state, do: "text-green-600", else: "text-red-600")
+        ]}>
+          {if item.latest_sensor_data.pump_state, do: "Ligada", else: "Desligada"}
+        </span>
+      </:col>
+
+      <:action :let={{_id, item}}>
+        <.button phx-click={JS.navigate(~p"/devices/#{item.greenhouse.device.id}")}>
           <.icon name="hero-magnifying-glass" class="h-5 w-5" />
         </.button>
       </:action>
