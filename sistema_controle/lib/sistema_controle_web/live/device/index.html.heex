@@ -1,32 +1,48 @@
 <Layouts.app flash={@flash}>
-  Sistema de Monitoramento de Hidroponia {@device.name} - {@device.device_mac}
-  <.table id="sensor-data-table" rows={@streams.sensor_data}>
-    <:col :let={{_id, data}} label="PH">
-      <span>{data.ph}</span>
-    </:col>
-    <:col :let={{_id, data}} label="Condutividade">
-      <span>{data.ec}</span>
-    </:col>
-    <:col :let={{_id, data}} label="Temperatura">
-      <span>{data.water_temperature}</span>
-    </:col>
+  <h2 class="text-xl font-semibold mb-6">
+    Sistema de Monitoramento de Hidroponia — {@device.name} ({@device.device_mac})
+  </h2>
+  <.button
+    phx-click="toggle_pump"
+    phx-value-state={if @pump_state, do: "false", else: "true"}
+    class={
+    "mb-6 px-6 py-3 rounded-lg text-white font-medium transition-colors hover:cursor-pointer " <>
+      if(@pump_state, do: "bg-red-600 hover:bg-red-700", else: "bg-green-600 hover:bg-green-700") <>
+      if(@pump_loading, do: " opacity-50 pointer-events-none", else: "")
+  }
+  >
+    {if @pump_state, do: "Desligar Bomba", else: "Ligar Bomba"}
+  </.button>
 
-    <:col :let={{_id, data}} label="Pump State">
-      <span>{data.pump_state}</span>
-    </:col>
-
-    <:col :let={{_id, data}} label="Level0">
-      <span>{data.level0}</span>
-    </:col>
-    <:col :let={{_id, data}} label="Level1">
-      <span>{data.level1}</span>
-    </:col>
-    <:col :let={{_id, data}} label="Level2">
-      <span>{data.level2}</span>
-    </:col>
-    <:col :let={{_id, data}} label="Air temp"><span>{data.air_temperature}</span></:col>
-
-    <:col :let={{_id, data}} label="Air humidity"><span>{data.air_humidity}</span></:col>
-    <:col :let={{_id, data}} label="Water Flow"><span>{data.water_flow}</span></:col>
-  </.table>
+  <div class="overflow-x-auto rounded-lg shadow border border-gray-200">
+    <.table id="sensor-data-table" rows={@streams.sensor_data}>
+      <:col :let={{_id, data}} label="pH">
+        <span>{data.ph}</span>
+      </:col>
+      <:col :let={{_id, data}} label="Condutividade (µS/cm)">
+        <span>{data.ec}</span>
+      </:col>
+      <:col :let={{_id, data}} label="Temp. da Água (°C)">
+        <span>{data.water_temperature}</span>
+      </:col>
+      <:col :let={{_id, data}} label="Bomba">
+        <span class={[
+          "font-semibold",
+          if(data.pump_state, do: "text-green-600", else: "text-red-600")
+        ]}>
+          {if data.pump_state, do: "Ligada", else: "Desligada"}
+        </span>
+      </:col>
+      <:col :let={{_id, data}} label="Nível 0"><span>{data.level0}</span></:col>
+      <:col :let={{_id, data}} label="Nível 1"><span>{data.level1}</span></:col>
+      <:col :let={{_id, data}} label="Nível 2"><span>{data.level2}</span></:col>
+      <:col :let={{_id, data}} label="Temp. do Ar (°C)">
+        <span>{data.air_temperature}</span>
+      </:col>
+      <:col :let={{_id, data}} label="Umidade do Ar (%)"><span>{data.air_humidity}</span></:col>
+      <:col :let={{_id, data}} label="Fluxo de Água (L/min)">
+        <span>{data.water_flow}</span>
+      </:col>
+    </.table>
+  </div>
 </Layouts.app>

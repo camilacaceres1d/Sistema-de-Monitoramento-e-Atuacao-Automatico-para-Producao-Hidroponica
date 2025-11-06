@@ -11,15 +11,37 @@ defmodule SistemaControleWeb.Device.Index do
     end
 
     device = Devices.get_device_by_id(device_id)
-
+    pump_state = Sensors.get_last_pump_state(device_id)
     sensor_data = Sensors.get_sensor_data_by_device(device_id)
 
-    {:ok, socket |> stream(:sensor_data, sensor_data) |> assign(device: device)}
+    {:ok,
+     socket
+     |> stream(:sensor_data, sensor_data)
+     |> assign(device: device, pump_state: pump_state, pump_loading: false)}
+  end
+
+  @impl true
+  def handle_event("toggle_pump", %{"state" => state}, socket) do
+    if socket.assigns.pump_loading do
+      {:noreply, socket}
+    else
+      sendState =
+        case state do
+          "true" -> true
+          "false" -> false
+        end
+
+      Devices.send_pump_command(socket.assigns.device.device_mac, sendState)
+      {:noreply, socket |> assign(pump_loading: true)}
+    end
   end
 
   @impl true
   def handle_info({:new_sensor_data, sensor_data}, socket) do
-    {:noreply, socket |> stream_insert(:sensor_data, sensor_data, at: 0)}
+    {:noreply,
+     socket
+     |> stream_insert(:sensor_data, sensor_data, at: 0)
+     |> assign(pump_state: sensor_data.pump_state, pump_loading: false)}
   end
 
   @impl true

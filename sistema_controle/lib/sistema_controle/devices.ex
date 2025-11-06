@@ -59,6 +59,16 @@ defmodule SistemaControle.Devices do
   end
 
   @doc """
+    Send a message to active a pump
+  """
+  def send_pump_command(device_mac, state) do
+    SistemaControle.MqttClient.publish(
+      "greenhouse/#{device_mac}/commands",
+      Jason.encode!(%{atuador: "bomba", valor: state})
+    )
+  end
+
+  @doc """
   Subscribe to updates from a device
   """
   def subscribe(id) do

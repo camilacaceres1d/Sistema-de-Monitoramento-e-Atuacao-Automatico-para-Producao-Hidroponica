@@ -86,6 +86,19 @@ defmodule SistemaControle.Sensors do
   end
 
   @doc """
+    Get last pump state for a specific device
+  """
+  def get_last_pump_state(device_id) do
+    from(sd in SensorData,
+      where: sd.device_id == ^device_id,
+      order_by: [desc: sd.inserted_at],
+      limit: 1,
+      select: sd.pump_state
+    )
+    |> Repo.one()
+  end
+
+  @doc """
   Subscribe to all sensor messages
   """
   def subscribe_sensor_all do
