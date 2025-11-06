@@ -112,7 +112,7 @@ float read_temperature_c() {
     return lastValidTempC;
   }
   lastValidTempC = t;
-  return true;
+  return t;
 }
 
 void set_pump(bool on) {
