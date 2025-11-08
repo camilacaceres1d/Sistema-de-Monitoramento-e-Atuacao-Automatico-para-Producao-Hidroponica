@@ -15,9 +15,11 @@ defmodule SistemaControleWeb.Device.Index do
 
     device = Devices.get_device_by_id(device_id)
     pump_state = Sensors.get_last_pump_state(device_id)
-    sensor_data = Sensors.get_sensor_data_by_device(device_id)
     greenhouse_config = Greenhouse.get_greenhouse_config(device_id)
+    associated_benchs = Greenhouse.get_associated_benchs(device_id)
+    sensor_data = Greenhouse.get_all_sensor_data(device_id)
     changeset = Greenhouse.change_greenhouse_config(greenhouse_config || %{})
+    available_benchs = Devices.get_available_benchs()
 
     irrigation_schedules =
       if greenhouse_config do
@@ -37,31 +39,44 @@ defmodule SistemaControleWeb.Device.Index do
      |> assign(
        device: device,
        pump_state: pump_state,
-       pump_loading: false,
        greenhouse_config: greenhouse_config,
        form_config: to_form(changeset, as: :config_form),
        irrigation_schedules: irrigation_schedules,
        irrigation_schedule_form:
          to_form(changeset_irrigation_schedule, as: :irrigation_schedule_form),
        is_edit: false,
-       id_edit: nil
+       id_edit: nil,
+       available_benchs: available_benchs,
+       associated_benchs: associated_benchs,
+       form_add_bench: to_form(%{"bench_id" => nil}, as: :form_add_bench),
+       open_config_form: nil
+     )}
+  end
+
+  @impl true
+  def handle_event("open_config_form", %{"form" => form}, socket) do
+    {:noreply,
+     socket
+     |> assign(
+       open_config_form:
+         if socket.assigns.open_config_form == String.to_atom(form) do
+           nil
+         else
+           String.to_atom(form)
+         end
      )}
   end
 
   @impl true
   def handle_event("toggle_pump", %{"state" => state}, socket) do
-    if socket.assigns.pump_loading do
-      {:noreply, socket}
-    else
-      sendState =
-        case state do
-          "true" -> true
-          "false" -> false
-        end
+    sendState =
+      case state do
+        "true" -> true
+        "false" -> false
+      end
 
-      Devices.send_pump_command(socket.assigns.device.device_mac, sendState)
-      {:noreply, socket |> assign(pump_loading: true)}
-    end
+    Devices.send_pump_command(socket.assigns.device.device_mac, sendState)
+    {:noreply, socket}
   end
 
   def handle_event("save_config", %{"config_form" => config_params}, socket) do
@@ -167,14 +182,48 @@ defmodule SistemaControleWeb.Device.Index do
      )}
   end
 
+  def handle_event("add_bench", %{"form_add_bench" => %{"bench_id" => bench_id}}, socket) do
+    Greenhouse.link_bench(socket.assigns.device.id, bench_id)
+
+    {:noreply,
+     socket
+     |> assign(
+       associated_benchs: Greenhouse.get_associated_benchs(socket.assigns.device.id),
+       available_benchs: Devices.get_available_benchs()
+     )}
+  end
+
+  def handle_event("remove_bench", %{"bench_id" => bench_id}, socket) do
+    case Greenhouse.unlink_bench(bench_id) do
+      {:ok, _bench} ->
+        {:noreply,
+         socket
+         |> assign(
+           associated_benchs: Greenhouse.get_associated_benchs(socket.assigns.device.id),
+           available_benchs: Devices.get_available_benchs()
+         )
+         |> put_flash(:info, "Bancada desvinculada com sucesso.")}
+
+      {:error, _reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Erro ao desvincular bancada.")}
+    end
+  end
+
   @impl true
   def handle_info({:new_sensor_data, sensor_data}, socket) do
-    loading = sensor_data.pump_state != socket.assigns.pump_state
+    new_pump_state =
+      if sensor_data.pump_state != nil do
+        sensor_data.pump_state
+      else
+        socket.assigns.pump_state
+      end
 
     {:noreply,
      socket
      |> stream_insert(:sensor_data, sensor_data, at: 0)
-     |> assign(pump_state: sensor_data.pump_state, pump_loading: loading)}
+     |> assign(pump_state: new_pump_state)}
   end
 
   @impl true

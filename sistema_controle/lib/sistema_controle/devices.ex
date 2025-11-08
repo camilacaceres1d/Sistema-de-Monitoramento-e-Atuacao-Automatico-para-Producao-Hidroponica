@@ -1,4 +1,5 @@
 defmodule SistemaControle.Devices do
+  import Ecto.Query
   alias SistemaControle.Greenhouse
   alias SistemaControle.Schemas.Device
   alias SistemaControle.Repo
@@ -41,7 +42,13 @@ defmodule SistemaControle.Devices do
   def create_or_update_device(device_mac, type) do
     case get_device_by_mac(device_mac) do
       nil ->
-        device = create_device(%{device_mac: device_mac, type: type})
+        name =
+          Atom.to_string(type) <>
+            "_" <>
+            String.slice(device_mac, -4..-1)
+
+        device =
+          create_device(%{device_mac: device_mac, type: type, name: name})
 
         if type == :greenhouse do
           SistemaControle.Greenhouse.create_if_not_exists(device.id)
@@ -71,7 +78,17 @@ defmodule SistemaControle.Devices do
   end
 
   @doc """
-  Subscribe to updates from a device
+    Get available benchs to associate with a greenhouse
+  """
+  def get_available_benchs() do
+    from(d in Device,
+      where: d.type == :bench and is_nil(d.greenhouse_id)
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+    Subscribe to updates from a device
   """
   def subscribe(id) do
     Phoenix.PubSub.subscribe(SistemaControle.PubSub, "device:#{id}")

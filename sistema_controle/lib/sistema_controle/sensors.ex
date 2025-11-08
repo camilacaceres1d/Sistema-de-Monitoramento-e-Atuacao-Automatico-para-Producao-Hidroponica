@@ -46,8 +46,13 @@ defmodule SistemaControle.Sensors do
 
         case create_sensor_data(sensor_data_attrs) do
           {:ok, sensor_data} ->
-            Devices.broadcast(device.id, {:new_sensor_data, sensor_data})
-            Greenhouse.broadcast_update(device.id, sensor_data)
+            if device.type == :greenhouse do
+              Devices.broadcast(device.id, {:new_sensor_data, sensor_data})
+              Greenhouse.broadcast_update(device.id, sensor_data)
+            else
+              Devices.broadcast(device.greenhouse_id, {:new_sensor_data, sensor_data})
+            end
+
             {:ok, sensor_data}
 
           {:error, reason} ->
