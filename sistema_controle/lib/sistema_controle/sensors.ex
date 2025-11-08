@@ -23,8 +23,6 @@ defmodule SistemaControle.Sensors do
         {:error, :device_not_found}
 
       device ->
-        IO.inspect(device)
-
         sensor_data_attrs =
           case Jason.decode(payload) do
             {:ok, data} when is_map(data) ->
@@ -32,9 +30,9 @@ defmodule SistemaControle.Sensors do
                 ph: Map.get(data, "ph"),
                 ec: Map.get(data, "ec"),
                 water_temperature: Map.get(data, "temp"),
-                air_temperature: Map.get(data, "air_temperature"),
+                air_temperature: Map.get(data, "air_temp"),
                 air_humidity: Map.get(data, "air_humidity"),
-                water_flow: Map.get(data, "water_flow"),
+                water_flow: Map.get(data, "flow"),
                 level0: get_in(data, ["levels", "level0"]),
                 level1: get_in(data, ["levels", "level1"]),
                 level2: get_in(data, ["levels", "level2"]),
@@ -82,7 +80,8 @@ defmodule SistemaControle.Sensors do
   def get_sensor_data_by_device(device_id) do
     from(sd in SensorData,
       where: sd.device_id == ^device_id,
-      order_by: [desc: sd.inserted_at]
+      order_by: [desc: sd.inserted_at],
+      limit: 100
     )
     |> Repo.all()
   end

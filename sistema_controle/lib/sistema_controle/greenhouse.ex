@@ -98,7 +98,6 @@ defmodule SistemaControle.Greenhouse do
         |> Repo.insert()
 
       _greenhouse_config ->
-        IO.inspect("Greenhouse config ja existe para device_id #{device_id}")
         :ok
     end
   end

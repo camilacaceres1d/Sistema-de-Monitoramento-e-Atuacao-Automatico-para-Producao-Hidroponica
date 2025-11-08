@@ -2,7 +2,8 @@ defmodule SistemaControle.MqttClient do
   use GenServer
   require Logger
 
-  @sensor_topic "greenhouse/+/sensors"
+  @greenhouse_topic "greenhouse/+/sensors"
+  @bench_topic "bench/+/sensors"
 
   def start_link(_) do
     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
@@ -23,7 +24,8 @@ defmodule SistemaControle.MqttClient do
       {:ok, client} when is_pid(client) ->
         case :emqtt.connect(client) do
           {:ok, _props} ->
-            topic = @sensor_topic
+            topic = @greenhouse_topic
+            topic2 = @bench_topic
 
             case :emqtt.subscribe(client, topic, qos: 0) do
               {:ok, _, _} ->
@@ -32,6 +34,16 @@ defmodule SistemaControle.MqttClient do
 
               {:error, reason} ->
                 Logger.error("Error subscribing to #{topic}: #{inspect(reason)}")
+                {:stop, {:connect_error, reason}}
+            end
+
+            case :emqtt.subscribe(client, topic2, qos: 0) do
+              {:ok, _, _} ->
+                Logger.info("Subscribed to: #{topic2}")
+                {:ok, %{client: client}}
+
+              {:error, reason} ->
+                Logger.error("Error subscribing to #{topic2}: #{inspect(reason)}")
                 {:stop, {:connect_error, reason}}
             end
 
