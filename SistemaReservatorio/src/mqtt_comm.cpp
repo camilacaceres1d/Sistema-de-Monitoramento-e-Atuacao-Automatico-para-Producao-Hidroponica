@@ -60,8 +60,7 @@ static void ensureMqttConnected() {
   mqttClient.setServer(MQTT_HOST, MQTT_PORT);
   mqttClient.setCallback(mqttCallback);
 
-  String clientId =
-      String("greenhouse-") + String((uint32_t)ESP.getEfuseMac(), HEX);
+  String clientId = String("greenhouse-") + WiFi.macAddress();
   for (int i = 0; i < 3 && !mqttClient.connected(); ++i) {
     mqttClient.connect(clientId.c_str(), MQTT_USER, MQTT_PASSWORD);
     if (!mqttClient.connected())
@@ -70,7 +69,7 @@ static void ensureMqttConnected() {
 
   if (mqttClient.connected()) {
     String topic = String("greenhouse/") +
-                   String((uint32_t)ESP.getEfuseMac(), HEX) + "/commands";
+                      WiFi.macAddress(); + "/commands";
     mqttClient.subscribe(topic.c_str());
   }
 }
@@ -113,7 +112,7 @@ bool mqtt_publish_sensors(float ph, float ec, float tempC, bool level0,
     return false;
 
   String publishTopic = String("greenhouse/") +
-                        String((uint32_t)ESP.getEfuseMac(), HEX) + "/sensors";
+                           WiFi.macAddress(); + "/sensors";
   return mqttClient.publish(publishTopic.c_str(), (const uint8_t *)out, n,
                             false);
 }
