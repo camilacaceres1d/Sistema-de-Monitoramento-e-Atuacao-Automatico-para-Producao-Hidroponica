@@ -16,13 +16,12 @@ void loop() {
   network_mqtt_loop();
 
   static unsigned long lastRead = 0;
-  if (millis() - lastRead >= 5000) {
-
-    float ph = read_ph(PH_SENSOR_PIN, PH_CALIBRATION_A, PH_CALIBRATION_B);
+  if (millis() - lastRead >= 1000) {
 
     float tempNow = read_temperature_c();
-    float tempForEC = tempNow;
-    float ec = read_ec(TDS_SENSOR_PIN, tempForEC);
+    float ec = read_ec(TDS_SENSOR_PIN, tempNow);
+    float ph =
+        read_ph(PH_SENSOR_PIN, PH_CALIBRATION_A, PH_CALIBRATION_B, tempNow);
 
     bool level0 = read_water_presence(LEVEL0_SENSOR_PIN);
     bool level1 = read_water_presence(LEVEL1_SENSOR_PIN);

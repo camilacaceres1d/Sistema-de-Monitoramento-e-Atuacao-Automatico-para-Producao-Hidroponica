@@ -19,10 +19,11 @@ void sensors_init() {
 }
 
 int ph_buffer[PH_MEASURE_COUNT];
-float read_ph(uint8_t pin, float a, float b) {
+float read_ph(uint8_t pin, float a, float b, float temperature) {
 
   for (int i = 0; i < PH_MEASURE_COUNT; i++) {
     ph_buffer[i] = analogRead(pin);
+    delay(10);
   }
 
   for (int i = 0; i < PH_MEASURE_COUNT - 1; i++) {
@@ -50,10 +51,15 @@ float read_ph(uint8_t pin, float a, float b) {
 
   float avgAdc = (float)sum / (float)countUsed;
   float m = (avgAdc * VREF) / 4095.0f;
+  Serial.print("pH - tensão média: ");
+  Serial.println(m, 2);
 
   float ph = a * m + b; // reta do pH
 
-  return ph;
+  if (isnan(temperature)) {
+    temperature = 25.0f;
+  }
+  return ph + (25.0 - temperature) * 0.03;
 }
 
 int ec_buffer[EC_MEASURE_COUNT];
@@ -98,7 +104,7 @@ float read_ec(uint8_t pin, float temperature) {
 
   return (133.42 * compVoltage * compVoltage * compVoltage -
           255.86 * compVoltage * compVoltage + 857.39 * compVoltage) *
-         0.5;
+         1.5;
 }
 
 bool read_water_presence(uint8_t pin) { return digitalRead(pin) == HIGH; }
@@ -123,3 +129,36 @@ void set_pump(bool on) {
 }
 
 bool get_pump_state() { return pumpOn; }
+
+void calibrate_ph(uint8_t pin) {
+  const int samples = 10;
+  int readings[samples];
+
+  for (int i = 0; i < samples; i++) {
+    readings[i] = analogRead(pin);
+    delay(30);
+  }
+
+  for (int i = 0; i < samples - 1; i++) {
+    for (int j = i + 1; j < samples; j++) {
+      if (readings[i] > readings[j]) {
+        int tmp = readings[i];
+        readings[i] = readings[j];
+        readings[j] = tmp;
+      }
+    }
+  }
+
+  long sum = 0;
+  for (int i = 2; i < samples - 2; i++)
+    sum += readings[i];
+
+  float avgAdc = (float)sum / (samples - 4);
+  float voltage = (avgAdc * VREF) / 4095.0f;
+
+  Serial.print("ADC médio: ");
+  Serial.println(avgAdc, 2);
+  Serial.print("Tensão média: ");
+  Serial.print(voltage, 4);
+  Serial.println(" V");
+}
