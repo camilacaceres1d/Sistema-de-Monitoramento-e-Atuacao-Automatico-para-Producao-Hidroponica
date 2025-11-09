@@ -68,8 +68,7 @@ static void ensureMqttConnected() {
   }
 
   if (mqttClient.connected()) {
-    String topic = String("greenhouse/") +
-                      WiFi.macAddress(); + "/commands";
+    String topic = String("greenhouse/") + WiFi.macAddress() + "/commands";
     mqttClient.subscribe(topic.c_str());
   }
 }
@@ -111,8 +110,7 @@ bool mqtt_publish_sensors(float ph, float ec, float tempC, bool level0,
   if (n == 0)
     return false;
 
-  String publishTopic = String("greenhouse/") +
-                           WiFi.macAddress(); + "/sensors";
+  String publishTopic = String("greenhouse/") + WiFi.macAddress() + "/sensors";
   return mqttClient.publish(publishTopic.c_str(), (const uint8_t *)out, n,
                             false);
 }

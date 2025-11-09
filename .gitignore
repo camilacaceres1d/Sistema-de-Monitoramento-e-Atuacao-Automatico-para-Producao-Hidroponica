@@ -1,3 +1,6 @@
 SistemaReservatorio/.cache/clangd/index
 SistemaReservatorio/.clangd
 SistemaReservatorio/compile_commands.json
+SistemaBancada/.clangd
+SistemaBancada/.cache/clangd/index
+SistemaBancada/compile_commands.json
