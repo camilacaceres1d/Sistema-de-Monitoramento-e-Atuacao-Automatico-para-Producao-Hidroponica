@@ -11,6 +11,11 @@ defmodule SistemaControle.Irrigation do
     Create irrigation schedule for greenhouse
   """
   def create_irrigation_schedule(attrs \\ %{}) do
+    attrs =
+      attrs
+      |> Map.put("start_time", to_utc(Map.get(attrs, "start_time_input")))
+      |> Map.put("end_time", to_utc(Map.get(attrs, "end_time_input")))
+
     %IrrigationSchedule{}
     |> IrrigationSchedule.changeset(attrs)
     |> Repo.insert()
@@ -20,6 +25,11 @@ defmodule SistemaControle.Irrigation do
     Update irrigation schedule
   """
   def update(%IrrigationSchedule{} = irrigation_schedule, attrs) do
+    attrs =
+      attrs
+      |> Map.put("start_time", to_utc(Map.get(attrs, "start_time_input")))
+      |> Map.put("end_time", to_utc(Map.get(attrs, "end_time_input")))
+
     irrigation_schedule
     |> change_irrigation_schedule(attrs)
     |> Repo.update()
@@ -39,7 +49,7 @@ defmodule SistemaControle.Irrigation do
         new_status = !irrigation_schedule.active
 
         irrigation_schedule
-        |> change_irrigation_schedule(%{active: new_status})
+        |> IrrigationSchedule.changeset_toggle(%{active: new_status})
         |> Repo.update()
     end
   end
@@ -60,5 +70,35 @@ defmodule SistemaControle.Irrigation do
         where: is.greenhouse_config_id == ^greenhouse_config_id
       )
     )
+  end
+
+  def to_utc(nil), do: nil
+
+  def to_utc(%Time{} = time) do
+    shift_time(time, -3)
+  end
+
+  def to_utc(str) when is_binary(str) do
+    str =
+      case String.split(str, ":") do
+        [h, m] -> "#{h}:#{m}:00"
+        _ -> str
+      end
+
+    case Time.from_iso8601(str) do
+      {:ok, time} -> shift_time(time, -3)
+      _ -> nil
+    end
+  end
+
+  defp shift_time(time, offset_hours) do
+    total_seconds = time.hour * 3600 + time.minute * 60 + time.second
+    utc_seconds = rem(total_seconds - offset_hours * 3600 + 24 * 3600, 24 * 3600)
+
+    %Time{
+      hour: div(utc_seconds, 3600),
+      minute: div(rem(utc_seconds, 3600), 60),
+      second: rem(utc_seconds, 60)
+    }
   end
 end

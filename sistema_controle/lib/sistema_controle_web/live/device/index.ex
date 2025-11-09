@@ -101,6 +101,24 @@ defmodule SistemaControleWeb.Device.Index do
   end
 
   def handle_event(
+        "validate_irrigation_schedule",
+        %{"irrigation_schedule_form" => schedule_params},
+        socket
+      ) do
+    attrs =
+      Map.put(schedule_params, "greenhouse_config_id", socket.assigns.greenhouse_config.id)
+      |> normalize_days()
+
+    changeset =
+      %IrrigationSchedule{}
+      |> IrrigationSchedule.changeset(attrs)
+      |> Map.put(:action, :validate)
+
+    {:noreply,
+     socket |> assign(irrigation_schedule_form: to_form(changeset, as: :irrigation_schedule_form))}
+  end
+
+  def handle_event(
         "add_irrigation_schedule",
         %{"irrigation_schedule_form" => schedule_params},
         socket
@@ -109,14 +127,6 @@ defmodule SistemaControleWeb.Device.Index do
       Map.put(schedule_params, "greenhouse_config_id", socket.assigns.greenhouse_config.id)
       |> normalize_days()
 
-    start_time_utc = to_utc(attrs["start_time"])
-    end_time_utc = to_utc(attrs["end_time"])
-
-    attrs =
-      attrs
-      |> Map.put("start_time", start_time_utc)
-      |> Map.put("end_time", end_time_utc)
-
     case Irrigation.create_irrigation_schedule(attrs) do
       {:ok, _schedule} ->
         refresh_schedules(socket, "Cronograma de irrigação adicionado com sucesso")
@@ -124,7 +134,10 @@ defmodule SistemaControleWeb.Device.Index do
       {:error, changeset} ->
         {:noreply,
          socket
-         |> assign(irrigation_schedule_form: to_form(changeset, as: :irrigation_schedule_form))
+         |> assign(
+           irrigation_schedule_form: to_form(changeset, as: :irrigation_schedule_form),
+           is_edit: false
+         )
          |> put_flash(:error, "Erro ao adicionar cronograma de irrigação.")}
     end
   end
@@ -140,7 +153,7 @@ defmodule SistemaControleWeb.Device.Index do
 
     case Irrigation.update(schedule, attrs) do
       {:ok, _schedule} ->
-        refresh_schedules(socket, "Cronograma de irrigação atualizado com sucesso", false)
+        refresh_schedules(socket, "Cronograma de irrigação atualizado com sucesso")
 
       {:error, changeset} ->
         {:noreply,
@@ -181,7 +194,11 @@ defmodule SistemaControleWeb.Device.Index do
         Integer.to_string(day)
       end)
 
-    changeset = Ecto.Changeset.put_change(changeset, :days_of_week, days_of_week_options)
+    changeset =
+      changeset
+      |> Ecto.Changeset.put_change(:days_of_week, days_of_week_options)
+      |> Ecto.Changeset.put_change(:start_time_input, from_utc(schedule.start_time))
+      |> Ecto.Changeset.put_change(:end_time_input, from_utc(schedule.end_time))
 
     {:noreply,
      socket
@@ -272,19 +289,23 @@ defmodule SistemaControleWeb.Device.Index do
     {:noreply, socket |> assign(device: sensor_data)}
   end
 
-  def normalize_days(attrs) do
+  defp normalize_days(attrs) do
     case Map.get(attrs, "days_of_week") do
       nil ->
         attrs
 
-      options ->
-        days = options |> Enum.at(0)
-        days_of_week = Enum.map(days, fn day -> String.to_integer(day) end)
-        Map.put(attrs, "days_of_week", days_of_week)
+      days when is_list(days) ->
+        Map.put(attrs, "days_of_week", Enum.map(days, &String.to_integer/1))
+
+      day when is_binary(day) ->
+        Map.put(attrs, "days_of_week", [String.to_integer(day)])
+
+      _ ->
+        attrs
     end
   end
 
-  def refresh_schedules(socket, msg, is_edit \\ true) do
+  def refresh_schedules(socket, msg) do
     updated_schedules =
       Irrigation.get_irrigation_schedules(socket.assigns.greenhouse_config.id)
 
@@ -296,33 +317,20 @@ defmodule SistemaControleWeb.Device.Index do
          to_form(Irrigation.change_irrigation_schedule(%IrrigationSchedule{}),
            as: :irrigation_schedule_form
          ),
-       is_edit: is_edit
+       is_edit: false
      )
      |> put_flash(:info, msg)}
   end
 
-  def to_utc(time_str) do
-    {:ok, time} = Time.from_iso8601(time_str <> ":00")
+  def from_utc(%Time{} = time) do
+    total_seconds = time.hour * 3600 + time.minute * 60 + time.second
+    local_seconds = rem(total_seconds - 3 * 3600 + 24 * 3600, 24 * 3600)
 
-    seconds = time.hour * 3600 + time.minute * 60 + time.second
-    utc_seconds = rem(seconds + 3 * 3600, 24 * 3600)
-
-    hours = div(utc_seconds, 3600)
-    minutes = div(rem(utc_seconds, 3600), 60)
-    seconds = rem(utc_seconds, 60)
-
-    %Time{hour: hours, minute: minutes, second: seconds}
-  end
-
-  def from_utc(time) do
-    seconds = time.hour * 3600 + time.minute * 60 + time.second
-    local_seconds = rem(seconds - 3 * 3600 + 24 * 3600, 24 * 3600)
-
-    hours = div(local_seconds, 3600)
-    minutes = div(rem(local_seconds, 3600), 60)
-    seconds = rem(local_seconds, 60)
-
-    %Time{hour: hours, minute: minutes, second: seconds}
+    %Time{
+      hour: div(local_seconds, 3600),
+      minute: div(rem(local_seconds, 3600), 60),
+      second: rem(local_seconds, 60)
+    }
   end
 
   defp push_charts(socket, sensor_data) do

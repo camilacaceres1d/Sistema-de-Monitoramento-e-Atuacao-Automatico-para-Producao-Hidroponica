@@ -41,7 +41,7 @@ defmodule SistemaControle.Workers.IrrigationWorker do
   defp should_be_on?(%IrrigationSchedule{} = schedule, now, today) do
     today in schedule.days_of_week and
       Time.compare(now, schedule.start_time) != :lt and
-      Time.compare(now, schedule.end_time) != :gt
+      Time.compare(now, schedule.end_time) == :lt
   end
 
   defp control_pump(%IrrigationSchedule{} = schedule, %Device{} = device, now) do

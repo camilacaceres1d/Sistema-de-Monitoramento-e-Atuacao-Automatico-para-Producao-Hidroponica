@@ -212,19 +212,20 @@
       <.form
         for={@irrigation_schedule_form}
         phx-submit={if @is_edit, do: "edit_irrigation_schedule", else: "add_irrigation_schedule"}
+        phx-change="validate_irrigation_schedule"
         class="mb-6"
       >
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="w-full">
             <.input
-              field={@irrigation_schedule_form[:start_time]}
+              field={@irrigation_schedule_form[:start_time_input]}
               type="time"
               label="Hora de Início"
             />
           </div>
           <div class="w-full">
             <.input
-              field={@irrigation_schedule_form[:end_time]}
+              field={@irrigation_schedule_form[:end_time_input]}
               type="time"
               label="Hora de Fim"
             />
@@ -250,10 +251,9 @@
             <.input
               field={@irrigation_schedule_form[:days_of_week]}
               type="multi-select"
-              multiple
               label="Dias da Semana"
               options={[
-                {"Domingo", "0"},
+                {"Domingo", "7"},
                 {"Segunda-feira", "1"},
                 {"Terça-feira", "2"},
                 {"Quarta-feira", "3"},
