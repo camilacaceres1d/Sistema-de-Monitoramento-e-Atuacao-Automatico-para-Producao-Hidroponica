@@ -279,10 +279,10 @@
       <% else %>
         <.table id="irrgation-schedule-table" rows={@irrigation_schedules}>
           <:col :let={schedule} label="Início">
-            <span>{schedule.start_time}</span>
+            <span>{from_utc(schedule.start_time)}</span>
           </:col>
           <:col :let={schedule} label="Fim">
-            <span>{schedule.end_time}</span>
+            <span>{from_utc(schedule.end_time)}</span>
           </:col>
           <:col :let={schedule} label="Tempo ligado (sec)">
             <span>{schedule.on_seconds}</span>

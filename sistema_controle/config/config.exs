@@ -60,6 +60,21 @@ config :logger, :default_formatter,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+config :sistema_controle, Oban,
+  repo: SistemaControle.Repo,
+  plugins: [
+    Oban.Plugins.Pruner,
+    {
+      Oban.Plugins.Cron,
+      crontab: [
+        {"* * * * *", SistemaControle.Workers.IrrigationWorker}
+      ]
+    }
+  ],
+  queues: [irrigation: 10]
+
+config :elixir, :time_zone_database, Tzdata.TimeZoneDatabase
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"

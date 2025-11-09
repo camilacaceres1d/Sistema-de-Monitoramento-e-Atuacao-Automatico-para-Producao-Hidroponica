@@ -108,6 +108,23 @@ defmodule SistemaControle.Greenhouse do
   end
 
   @doc """
+    Get device from greenhouse config id
+  """
+  def get_device_from_config(greenhouse_config_id) do
+    case Repo.get(GreenhouseConfig, greenhouse_config_id) do
+      nil -> nil
+      greenhouse_config -> Repo.get(Device, greenhouse_config.device_id)
+    end
+  end
+
+  @doc """
+    Set pump state
+  """
+  def set_pump_state(device, state) do
+    SistemaControle.Devices.send_pump_command(device.device_mac, state)
+  end
+
+  @doc """
     Update greenhouse configuration
   """
   def update(_, attrs \\ %{})
@@ -136,8 +153,6 @@ defmodule SistemaControle.Greenhouse do
   def create_if_not_exists(device_id) do
     case get_greenhouse_config(device_id) do
       nil ->
-        IO.inspect("Criando greenhouse config padrao para device_id #{device_id}")
-
         %GreenhouseConfig{}
         |> GreenhouseConfig.changeset(%{
           name: "Estufa #{device_id}",

@@ -16,7 +16,8 @@ defmodule SistemaControle.Application do
       # {SistemaControle.Worker, arg},
       # Start to serve requests, typically the last entry
       SistemaControleWeb.Endpoint,
-      SistemaControle.MqttClient
+      SistemaControle.MqttClient,
+      {Oban, Application.fetch_env!(:sistema_controle, Oban)}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

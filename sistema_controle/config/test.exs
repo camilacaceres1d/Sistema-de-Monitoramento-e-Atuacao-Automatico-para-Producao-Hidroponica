@@ -1,4 +1,5 @@
 import Config
+config :sistema_controle, Oban, testing: :manual
 
 # Configure your database
 #

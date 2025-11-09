@@ -107,6 +107,14 @@ defmodule SistemaControleWeb.Device.Index do
       Map.put(schedule_params, "greenhouse_config_id", socket.assigns.greenhouse_config.id)
       |> normalize_days()
 
+    start_time_utc = to_utc(attrs["start_time"])
+    end_time_utc = to_utc(attrs["end_time"])
+
+    attrs =
+      attrs
+      |> Map.put("start_time", start_time_utc)
+      |> Map.put("end_time", end_time_utc)
+
     case Irrigation.create_irrigation_schedule(attrs) do
       {:ok, _schedule} ->
         refresh_schedules(socket, "Cronograma de irrigação adicionado com sucesso")
@@ -258,5 +266,29 @@ defmodule SistemaControleWeb.Device.Index do
        is_edit: is_edit
      )
      |> put_flash(:info, msg)}
+  end
+
+  def to_utc(time_str) do
+    {:ok, time} = Time.from_iso8601(time_str <> ":00")
+
+    seconds = time.hour * 3600 + time.minute * 60 + time.second
+    utc_seconds = rem(seconds + 3 * 3600, 24 * 3600)
+
+    hours = div(utc_seconds, 3600)
+    minutes = div(rem(utc_seconds, 3600), 60)
+    seconds = rem(utc_seconds, 60)
+
+    %Time{hour: hours, minute: minutes, second: seconds}
+  end
+
+  def from_utc(time) do
+    seconds = time.hour * 3600 + time.minute * 60 + time.second
+    local_seconds = rem(seconds - 3 * 3600 + 24 * 3600, 24 * 3600)
+
+    hours = div(local_seconds, 3600)
+    minutes = div(rem(local_seconds, 3600), 60)
+    seconds = rem(local_seconds, 60)
+
+    %Time{hour: hours, minute: minutes, second: seconds}
   end
 end
