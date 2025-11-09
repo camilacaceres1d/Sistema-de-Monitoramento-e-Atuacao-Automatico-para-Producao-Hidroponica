@@ -49,8 +49,9 @@ defmodule SistemaControle.Schemas.GreenhouseConfig do
       :crop_name,
       :device_id
     ])
+    |> validate_required(:name, message: "O nome é obrigatório")
+    |> validate_required(:crop_name, message: "O nome do cultivo é obrigatório")
     |> validate_required([
-      :name,
       :min_ph,
       :ideal_ph,
       :max_ph,
@@ -66,9 +67,8 @@ defmodule SistemaControle.Schemas.GreenhouseConfig do
       :min_air_humidity,
       :ideal_air_humidity,
       :max_air_humidity,
-      :crop_name,
       :device_id
-    ])
+    ], message: "Campo obrigatório")
     |> validate_fields()
     |> validate_number(:min_ph,
       greater_than_or_equal_to: 0,
