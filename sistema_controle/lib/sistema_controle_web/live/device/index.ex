@@ -100,6 +100,11 @@ defmodule SistemaControleWeb.Device.Index do
     end
   end
 
+  def handle_event("validate_config", %{"config_form" => config_params}, socket) do
+    changeset = Greenhouse.change_greenhouse_config(socket.assigns.greenhouse_config, config_params) |> Map.put(:action, :validate)
+    {:noreply, socket |> assign(form_config: to_form(changeset, as: :config_form))}
+  end
+
   def handle_event(
         "validate_irrigation_schedule",
         %{"irrigation_schedule_form" => schedule_params},

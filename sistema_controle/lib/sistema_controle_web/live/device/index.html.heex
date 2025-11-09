@@ -68,7 +68,7 @@
         </.form>
       </div>
 
-      <.form for={@form_config} phx-submit="save_config">
+      <.form for={@form_config} phx-submit="save_config" phx-change="validate_config">
         <div class="flex flex-row w-full gap-4">
           <div class="w-full">
             <.input
