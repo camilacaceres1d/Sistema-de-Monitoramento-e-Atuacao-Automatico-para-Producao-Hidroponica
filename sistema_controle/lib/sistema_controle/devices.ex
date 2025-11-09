@@ -42,14 +42,14 @@ defmodule SistemaControle.Devices do
   def create_or_update_device(device_mac, type) do
     case get_device_by_mac(device_mac) do
       nil ->
-
         {:ok, device} =
           create_device(%{device_mac: device_mac, type: type})
 
-        name =  case type do
-          :greenhouse -> "Estufa #{device.id}"
-          :bench -> "Bancada #{device.id}"
-        end
+        name =
+          case type do
+            :greenhouse -> "Estufa #{device.id}"
+            :bench -> "Bancada #{device.id}"
+          end
 
         {:ok, device} = update_device(device, %{device_mac: device_mac, type: type, name: name})
 
@@ -71,12 +71,22 @@ defmodule SistemaControle.Devices do
   end
 
   @doc """
-    Send a message to active a pump
+    Send a message to set a pump state
   """
   def send_pump_command(device_mac, state) do
     SistemaControle.MqttClient.publish(
       "greenhouse/#{device_mac}/commands",
       Jason.encode!(%{atuador: "bomba", valor: state})
+    )
+  end
+
+  @doc """
+    Send a message to set a light state
+  """
+  def send_light_command(device_mac, state) do
+    SistemaControle.MqttClient.publish(
+      "bench/#{device_mac}/commands",
+      Jason.encode!(%{atuador: "luz", valor: state})
     )
   end
 

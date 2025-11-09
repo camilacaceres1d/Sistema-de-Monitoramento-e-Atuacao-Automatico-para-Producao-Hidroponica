@@ -4,6 +4,7 @@ defmodule SistemaControle.Greenhouse do
   alias SistemaControle.Schemas.Device
   alias SistemaControle.Schemas.SensorData
   alias SistemaControle.Repo
+  alias SistemaControle.Devices
 
   def change_greenhouse_config(%GreenhouseConfig{} = greenhouse_config, attrs \\ %{}) do
     GreenhouseConfig.changeset(greenhouse_config, attrs)
@@ -193,6 +194,38 @@ defmodule SistemaControle.Greenhouse do
       preload: [:device]
     )
     |> Repo.all()
+  end
+
+  @doc """
+    Get light state by greenhouse
+  """
+  def get_light_state(greenhouse_id) do
+    latest_per_device =
+      from(sd in SensorData,
+        join: d in assoc(sd, :device),
+        where: d.greenhouse_id == ^greenhouse_id and d.type == :bench,
+        order_by: [d.id, desc: sd.inserted_at],
+        distinct: d.id,
+        select: sd.light_state
+      )
+      |> Repo.all()
+
+    case Enum.frequencies(latest_per_device) do
+      %{true => t, false => f} when t > f -> true
+      %{true => t, false => f} when f > t -> false
+      _ -> false
+    end
+  end
+
+  @doc """
+    Toggle all lights in the greenhouse benches
+  """
+  def toggle_lights(greenhouse_id, state) do
+    benches = get_associated_benchs(greenhouse_id)
+
+    Enum.each(benches, fn bench ->
+      Devices.send_light_command(bench.device_mac, state)
+    end)
   end
 
   def broadcast_new(device) do

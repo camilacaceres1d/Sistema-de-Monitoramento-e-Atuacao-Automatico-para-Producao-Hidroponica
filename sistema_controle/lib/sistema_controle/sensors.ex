@@ -37,6 +37,7 @@ defmodule SistemaControle.Sensors do
                 level1: get_in(data, ["levels", "level1"]),
                 level2: get_in(data, ["levels", "level2"]),
                 pump_state: Map.get(data, "pump"),
+                light_state: Map.get(data, "light"),
                 device_id: device.id
               }
 

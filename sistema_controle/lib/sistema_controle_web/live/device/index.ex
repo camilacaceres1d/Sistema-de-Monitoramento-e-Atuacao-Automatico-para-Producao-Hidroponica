@@ -81,6 +81,18 @@ defmodule SistemaControleWeb.Device.Index do
     {:noreply, socket}
   end
 
+  @impl true
+  def handle_event("toggle_lights", %{"state" => state}, socket) do
+    sendState =
+      case state do
+        "true" -> true
+        "false" -> false
+      end
+
+    Greenhouse.toggle_lights(socket.assigns.device.id, sendState)
+    {:noreply, socket}
+  end
+
   def handle_event("save_config", %{"config_form" => config_params}, socket) do
     case Greenhouse.update(
            socket.assigns.greenhouse_config,
@@ -101,7 +113,10 @@ defmodule SistemaControleWeb.Device.Index do
   end
 
   def handle_event("validate_config", %{"config_form" => config_params}, socket) do
-    changeset = Greenhouse.change_greenhouse_config(socket.assigns.greenhouse_config, config_params) |> Map.put(:action, :validate)
+    changeset =
+      Greenhouse.change_greenhouse_config(socket.assigns.greenhouse_config, config_params)
+      |> Map.put(:action, :validate)
+
     {:noreply, socket |> assign(form_config: to_form(changeset, as: :config_form))}
   end
 

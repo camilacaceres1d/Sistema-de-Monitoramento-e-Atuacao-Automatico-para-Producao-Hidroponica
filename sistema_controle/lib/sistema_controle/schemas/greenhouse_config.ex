@@ -51,24 +51,27 @@ defmodule SistemaControle.Schemas.GreenhouseConfig do
     ])
     |> validate_required(:name, message: "O nome é obrigatório")
     |> validate_required(:crop_name, message: "O nome do cultivo é obrigatório")
-    |> validate_required([
-      :min_ph,
-      :ideal_ph,
-      :max_ph,
-      :min_ec,
-      :ideal_ec,
-      :max_ec,
-      :min_water_temp,
-      :ideal_water_temp,
-      :max_water_temp,
-      :min_air_temp,
-      :ideal_air_temp,
-      :max_air_temp,
-      :min_air_humidity,
-      :ideal_air_humidity,
-      :max_air_humidity,
-      :device_id
-    ], message: "Campo obrigatório")
+    |> validate_required(
+      [
+        :min_ph,
+        :ideal_ph,
+        :max_ph,
+        :min_ec,
+        :ideal_ec,
+        :max_ec,
+        :min_water_temp,
+        :ideal_water_temp,
+        :max_water_temp,
+        :min_air_temp,
+        :ideal_air_temp,
+        :max_air_temp,
+        :min_air_humidity,
+        :ideal_air_humidity,
+        :max_air_humidity,
+        :device_id
+      ],
+      message: "Campo obrigatório"
+    )
     |> validate_fields()
     |> validate_number(:min_ph,
       greater_than_or_equal_to: 0,
@@ -144,7 +147,7 @@ defmodule SistemaControle.Schemas.GreenhouseConfig do
     end)
   end
 
-  def validate_order(changeset, _, field, nil, nil, nil), do: changeset
+  def validate_order(changeset, _, _field, nil, nil, nil), do: changeset
 
   def validate_order(changeset, _, field, min, ideal, max) do
     cond do
