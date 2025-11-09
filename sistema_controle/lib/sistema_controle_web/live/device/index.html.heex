@@ -333,8 +333,22 @@
     </div>
   <% end %>
 
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+    <div id="pH" phx-hook="Chart" phx-update="ignore" class="w-full h-64"></div>
+    <div id="EC" phx-hook="Chart" phx-update="ignore" class="w-full h-64"></div>
+    <div id="Temperatura da Água" phx-hook="Chart" phx-update="ignore" class="w-full h-64"></div>
+    <%= if Enum.any?(@associated_benchs) do %>
+      <div id="Temperatura do Ar" phx-hook="Chart" phx-update="ignore" class="w-full h-64"></div>
+      <div id="Umidade do Ar" phx-hook="Chart" phx-update="ignore" class="w-full h-64"></div>
+      <div id="Fluxo de água" phx-hook="Chart" phx-update="ignore" class="w-full h-64"></div>
+    <% end %>
+  </div>
+
   <div class="overflow-x-auto rounded-lg shadow border border-base-200">
     <.table id="sensor-data-table" rows={@streams.sensor_data}>
+      <:col :let={{_id, data}} label="Local">
+        <span>{if data.device.name != nil, do: data.device.name, else: ""}</span>
+      </:col>
       <:col :let={{_id, data}} label="pH">
         <span>{data.ph}</span>
       </:col>

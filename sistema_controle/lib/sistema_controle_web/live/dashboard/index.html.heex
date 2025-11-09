@@ -78,6 +78,11 @@
           {format_value(item.avg_air_humidity)}%
         </span>
       </:col>
+      <:col :let={{_id, item}} label="Fluxo de Água">
+        <span class="font-medium px-3 py-1 rounded-md">
+          {format_value(item.avg_water_flow)}
+        </span>
+      </:col>
       <:col :let={{_id, item}} label="Estado da Bomba">
         <span class={[
           "font-semibold",

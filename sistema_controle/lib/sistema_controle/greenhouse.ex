@@ -58,8 +58,6 @@ defmodule SistemaControle.Greenhouse do
   end
 
   def get_all() do
-    import Ecto.Query
-
     sub_latest =
       from(sd in SensorData,
         distinct: sd.device_id,
@@ -78,7 +76,8 @@ defmodule SistemaControle.Greenhouse do
         select: %{
           greenhouse_id: b.greenhouse_id,
           avg_air_temp: avg(sd.air_temperature),
-          avg_air_humidity: avg(sd.air_humidity)
+          avg_air_humidity: avg(sd.air_humidity),
+          avg_water_flow: avg(sd.water_flow)
         }
       )
 
@@ -102,7 +101,8 @@ defmodule SistemaControle.Greenhouse do
         greenhouse: greenhouse,
         latest_sensor_data: latest_sensor_data,
         avg_air_temp: avg_bench && avg_bench.avg_air_temp,
-        avg_air_humidity: avg_bench && avg_bench.avg_air_humidity
+        avg_air_humidity: avg_bench && avg_bench.avg_air_humidity,
+        avg_water_flow: avg_bench && avg_bench.avg_water_flow
       }
     end)
   end
@@ -190,7 +190,7 @@ defmodule SistemaControle.Greenhouse do
       where: d.greenhouse_id == ^greenhouse_id or d.id == ^greenhouse_id,
       order_by: [desc: sd.inserted_at],
       limit: 100,
-      select: sd
+      preload: [:device]
     )
     |> Repo.all()
   end
@@ -224,7 +224,8 @@ defmodule SistemaControle.Greenhouse do
           greenhouse: Repo.preload(greenhouse_config, :device),
           latest_sensor_data: sensor_data,
           avg_air_temp: avg_data.avg_air_temp,
-          avg_air_humidity: avg_data.avg_air_humidity
+          avg_air_humidity: avg_data.avg_air_humidity,
+          avg_water_flow: avg_data.avg_water_flow
         }
 
         broadcast_all({:greenhouse_update, item})
@@ -232,8 +233,6 @@ defmodule SistemaControle.Greenhouse do
   end
 
   defp calculate_bench_averages(greenhouse_id) do
-    import Ecto.Query
-
     sub_latest =
       from(sd in SensorData,
         distinct: sd.device_id,
@@ -250,12 +249,13 @@ defmodule SistemaControle.Greenhouse do
         on: sd.id == sdl.id,
         select: %{
           avg_air_temp: avg(sd.air_temperature),
-          avg_air_humidity: avg(sd.air_humidity)
+          avg_air_humidity: avg(sd.air_humidity),
+          avg_water_flow: avg(sd.water_flow)
         }
       )
       |> Repo.one()
 
-    result || %{avg_air_temp: nil, avg_air_humidity: nil}
+    result || %{avg_air_temp: nil, avg_air_humidity: nil, avg_water_flow: nil}
   end
 
   def subscribe_all() do

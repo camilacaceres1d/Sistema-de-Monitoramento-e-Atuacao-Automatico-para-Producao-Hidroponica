@@ -46,6 +46,8 @@ defmodule SistemaControle.Sensors do
 
         case create_sensor_data(sensor_data_attrs) do
           {:ok, sensor_data} ->
+            sensor_data = Map.put(sensor_data, :device, device)
+
             if device.type == :greenhouse do
               Devices.broadcast(device.id, {:new_sensor_data, sensor_data})
               Greenhouse.broadcast_update(device.id, sensor_data)

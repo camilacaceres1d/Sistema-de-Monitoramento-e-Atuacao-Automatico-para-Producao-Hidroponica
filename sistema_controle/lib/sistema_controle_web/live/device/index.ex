@@ -49,8 +49,10 @@ defmodule SistemaControleWeb.Device.Index do
        available_benchs: available_benchs,
        associated_benchs: associated_benchs,
        form_add_bench: to_form(%{"bench_id" => nil}, as: :form_add_bench),
-       open_config_form: nil
-     )}
+       open_config_form: nil,
+       sensor_data: sensor_data
+     )
+     |> push_charts(sensor_data)}
   end
 
   @impl true
@@ -222,16 +224,47 @@ defmodule SistemaControleWeb.Device.Index do
   @impl true
   def handle_info({:new_sensor_data, sensor_data}, socket) do
     new_pump_state =
-      if sensor_data.pump_state != nil do
-        sensor_data.pump_state
-      else
-        socket.assigns.pump_state
+      if sensor_data.pump_state != nil,
+        do: sensor_data.pump_state,
+        else: socket.assigns.pump_state
+
+    updated_data =
+      case socket.assigns.sensor_data do
+        [] ->
+          [
+            %{
+              inserted_at: sensor_data.inserted_at,
+              ph: sensor_data.ph,
+              ec: sensor_data.ec,
+              water_temperature: sensor_data.water_temperature,
+              air_temperature: sensor_data.air_temperature,
+              air_humidity: sensor_data.air_humidity,
+              water_flow: sensor_data.water_flow
+            }
+          ]
+
+        existing_data ->
+          last_records = List.first(existing_data)
+
+          merged_record = %{
+            inserted_at: sensor_data.inserted_at,
+            ph: sensor_data.ph || last_records.ph,
+            ec: sensor_data.ec || last_records.ec,
+            water_temperature: sensor_data.water_temperature || last_records.water_temperature,
+            air_temperature: sensor_data.air_temperature || last_records.air_temperature,
+            air_humidity: sensor_data.air_humidity || last_records.air_humidity,
+            water_flow: sensor_data.water_flow || last_records.water_flow
+          }
+
+          [merged_record | existing_data]
+          |> Enum.take(100)
       end
 
     {:noreply,
      socket
+     |> assign(sensor_data: updated_data, pump_state: new_pump_state)
      |> stream_insert(:sensor_data, sensor_data, at: 0)
-     |> assign(pump_state: new_pump_state)}
+     |> push_charts(updated_data)}
   end
 
   @impl true
@@ -290,5 +323,85 @@ defmodule SistemaControleWeb.Device.Index do
     seconds = rem(local_seconds, 60)
 
     %Time{hour: hours, minute: minutes, second: seconds}
+  end
+
+  defp push_charts(socket, sensor_data) do
+    datasets = %{
+      "pH" =>
+        sensor_data
+        |> Enum.filter(& &1.ph)
+        |> Enum.map(fn r -> %{x: r.inserted_at, y: r.ph} end),
+      "EC" =>
+        sensor_data
+        |> Enum.filter(& &1.ec)
+        |> Enum.map(fn r -> %{x: r.inserted_at, y: r.ec} end),
+      "Temperatura da Água" =>
+        sensor_data
+        |> Enum.filter(& &1.water_temperature)
+        |> Enum.map(fn r -> %{x: r.inserted_at, y: r.water_temperature} end),
+      "Temperatura do Ar" =>
+        sensor_data
+        |> Enum.filter(& &1.air_temperature)
+        |> Enum.map(fn r -> %{x: r.inserted_at, y: r.air_temperature} end),
+      "Umidade do Ar" =>
+        sensor_data
+        |> Enum.filter(& &1.air_humidity)
+        |> Enum.map(fn r -> %{x: r.inserted_at, y: r.air_humidity} end),
+      "Fluxo de água" =>
+        sensor_data
+        |> Enum.filter(& &1.water_flow)
+        |> Enum.map(fn r -> %{x: r.inserted_at, y: r.water_flow} end)
+    }
+
+    Enum.reduce(datasets, socket, fn {key, data}, sock ->
+      opts = build_chart_options(key, data)
+      push_event(sock, "chart-update-#{key}", opts)
+    end)
+  end
+
+  defp format_datetime_br(naive_datetime) do
+    day = naive_datetime.day |> Integer.to_string() |> String.pad_leading(2, "0")
+    month = naive_datetime.month |> Integer.to_string() |> String.pad_leading(2, "0")
+    hour = naive_datetime.hour |> Integer.to_string() |> String.pad_leading(2, "0")
+    minute = naive_datetime.minute |> Integer.to_string() |> String.pad_leading(2, "0")
+    second = naive_datetime.second |> Integer.to_string() |> String.pad_leading(2, "0")
+
+    "#{day}/#{month} #{hour}:#{minute}:#{second}"
+  end
+
+  defp build_chart_options(name, data) do
+    cleaned_data =
+      data
+      |> Enum.reject(&is_nil(&1.y))
+      |> Enum.sort_by(& &1.x)
+
+    %{
+      tooltip: %{
+        trigger: "axis",
+        formatter:
+          "function(params) { if (!params || params.length === 0) return ''; const date = params[0].name; const value = params[0].value; return date + '<br/>' + params[0].seriesName + ': ' + value; }"
+      },
+      xAxis: %{
+        type: "category",
+        boundaryGap: false,
+        data: Enum.map(cleaned_data, &format_datetime_br(&1.x)),
+        axisLabel: %{rotate: 45, fontSize: 10}
+      },
+      yAxis: %{type: "value", name: name},
+      grid: %{left: "10%", right: "5%", bottom: "40", top: "15%", containLabel: true},
+      series: [
+        %{
+          name: name,
+          type: "line",
+          data: Enum.map(cleaned_data, & &1.y),
+          smooth: true,
+          symbol: "circle",
+          symbolSize: 4,
+          lineStyle: %{width: 2},
+          animation: true,
+          animationDuration: 300
+        }
+      ]
+    }
   end
 end

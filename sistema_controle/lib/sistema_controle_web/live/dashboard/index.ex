@@ -17,7 +17,8 @@ defmodule SistemaControleWeb.Dashboard.Index do
           greenhouse: item.greenhouse,
           latest_sensor_data: item.latest_sensor_data,
           avg_air_temp: item.avg_air_temp,
-          avg_air_humidity: item.avg_air_humidity
+          avg_air_humidity: item.avg_air_humidity,
+          avg_water_flow: item.avg_water_flow
         }
       end)
 
