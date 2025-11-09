@@ -42,13 +42,16 @@ defmodule SistemaControle.Devices do
   def create_or_update_device(device_mac, type) do
     case get_device_by_mac(device_mac) do
       nil ->
-        name =
-          Atom.to_string(type) <>
-            "_" <>
-            String.slice(device_mac, -4..-1)
 
-        device =
-          create_device(%{device_mac: device_mac, type: type, name: name})
+        {:ok, device} =
+          create_device(%{device_mac: device_mac, type: type})
+
+        name =  case type do
+          :greenhouse -> "Estufa #{device.id}"
+          :bench -> "Bancada #{device.id}"
+        end
+
+        {:ok, device} = update_device(device, %{device_mac: device_mac, type: type, name: name})
 
         if type == :greenhouse do
           SistemaControle.Greenhouse.create_if_not_exists(device.id)
