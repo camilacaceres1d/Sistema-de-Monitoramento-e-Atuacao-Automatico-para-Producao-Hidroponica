@@ -21,7 +21,7 @@ defmodule SistemaControle.Workers.IrrigationWorker do
       |> Date.day_of_week()
 
     from(s in IrrigationSchedule,
-      where: s.active == true
+      where: s.active == true and ^today in s.days_of_week
     )
     |> Repo.all()
     |> Enum.each(fn %IrrigationSchedule{} = schedule ->
@@ -43,10 +43,12 @@ defmodule SistemaControle.Workers.IrrigationWorker do
     end_time = schedule.end_time
 
     in_time_window =
-      if Time.compare(end_time, start_time) == :lt do
-        Time.compare(now, start_time) != :lt or Time.compare(now, end_time) == :lt
-      else
-        Time.compare(now, start_time) != :lt and Time.compare(now, end_time) == :lt
+      cond do
+        Time.compare(end_time, start_time) == :lt ->
+          Time.compare(now, start_time) != :lt or Time.compare(now, end_time) == :lt
+
+        true ->
+          Time.compare(now, start_time) != :lt and Time.compare(now, end_time) == :lt
       end
 
     today in schedule.days_of_week and in_time_window
