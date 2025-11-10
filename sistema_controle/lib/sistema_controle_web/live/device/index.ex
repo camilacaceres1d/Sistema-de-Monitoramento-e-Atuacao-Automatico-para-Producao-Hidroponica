@@ -5,7 +5,9 @@ defmodule SistemaControleWeb.Device.Index do
   alias SistemaControle.Sensors
   alias SistemaControle.Greenhouse
   alias SistemaControle.Irrigation
+  alias SistemaControle.Light
   alias SistemaControle.Schemas.IrrigationSchedule
+  alias SistemaControle.Schemas.LightSchedule
 
   @impl true
   def mount(%{"id" => device_id}, _session, socket) do
@@ -28,10 +30,20 @@ defmodule SistemaControleWeb.Device.Index do
         []
       end
 
+    light_schedules =
+      if greenhouse_config do
+        Light.get_light_schedules(greenhouse_config.id)
+      else
+        []
+      end
+
     changeset_irrigation_schedule =
       SistemaControle.Irrigation.change_irrigation_schedule(
         %SistemaControle.Schemas.IrrigationSchedule{}
       )
+
+    changeset_light_schedule =
+      SistemaControle.Light.change_light_schedule(%SistemaControle.Schemas.LightSchedule{})
 
     {:ok,
      socket
@@ -46,11 +58,15 @@ defmodule SistemaControleWeb.Device.Index do
          to_form(changeset_irrigation_schedule, as: :irrigation_schedule_form),
        is_edit: false,
        id_edit: nil,
+       id_edit_light: nil,
+       is_edit_light: false,
        available_benchs: available_benchs,
        associated_benchs: associated_benchs,
        form_add_bench: to_form(%{"bench_id" => nil}, as: :form_add_bench),
        open_config_form: nil,
-       sensor_data: sensor_data
+       sensor_data: sensor_data,
+       light_schedules: light_schedules,
+       light_schedule_form: to_form(changeset_light_schedule, as: :light_schedule_form)
      )
      |> push_charts(sensor_data)}
   end
@@ -229,6 +245,115 @@ defmodule SistemaControleWeb.Device.Index do
      )}
   end
 
+  def handle_event(
+        "validate_light_schedule",
+        %{"light_schedule_form" => schedule_params},
+        socket
+      ) do
+    attrs =
+      Map.put(schedule_params, "greenhouse_config_id", socket.assigns.greenhouse_config.id)
+      |> normalize_days()
+
+    changeset =
+      %LightSchedule{}
+      |> LightSchedule.changeset(attrs)
+      |> Map.put(:action, :validate)
+
+    {:noreply,
+     socket |> assign(light_schedule_form: to_form(changeset, as: :light_schedule_form))}
+  end
+
+  def handle_event(
+        "add_light_schedule",
+        %{"light_schedule_form" => schedule_params},
+        socket
+      ) do
+    attrs =
+      Map.put(schedule_params, "greenhouse_config_id", socket.assigns.greenhouse_config.id)
+      |> normalize_days()
+
+    case Light.create_light_schedule(attrs) do
+      {:ok, _schedule} ->
+        refresh_light_schedules(socket, "Cronograma de luzes adicionado com sucesso")
+
+      {:error, changeset} ->
+        {:noreply,
+         socket
+         |> assign(
+           light_schedule_form: to_form(changeset, as: :light_schedule_form),
+           is_edit_light: false
+         )
+         |> put_flash(:error, "Erro ao adicionar cronograma de luzes.")}
+    end
+  end
+
+  def handle_event(
+        "edit_light_schedule",
+        %{"light_schedule_form" => schedule_params},
+        socket
+      ) do
+    schedule = Light.get_light_schedule(socket.assigns.id_edit_light)
+
+    attrs = normalize_days(schedule_params)
+
+    case Light.update(schedule, attrs) do
+      {:ok, _schedule} ->
+        refresh_schedules(socket, "Cronograma de luzes atualizado com sucesso")
+
+      {:error, changeset} ->
+        {:noreply,
+         socket
+         |> assign(
+           light_schedule_form: to_form(changeset, as: :light_schedule_form),
+           is_edit_light: true
+         )
+         |> put_flash(:error, "Erro ao atualizar cronograma de luzes.")}
+    end
+  end
+
+  def handle_event("toggle_light_schedule", %{"id" => schedule_id}, socket) do
+    case Light.toggle_light_schedule_active(schedule_id) do
+      {:ok, _schedule} ->
+        updated_schedules =
+          Light.get_light_schedules(socket.assigns.greenhouse_config.id)
+
+        {:noreply,
+         socket
+         |> assign(light_schedules: updated_schedules)
+         |> put_flash(:info, "Cronograma de irrigação atualizado com sucesso.")}
+
+      {:error, _reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Erro ao atualizar cronograma de irrigação.")}
+    end
+  end
+
+  def handle_event("open_edit_light_schedule", %{"id" => schedule_id}, socket) do
+    schedule = Light.get_light_schedule(schedule_id)
+
+    changeset = Light.change_light_schedule(schedule)
+
+    days_of_week_options =
+      Enum.map(schedule.days_of_week, fn day ->
+        Integer.to_string(day)
+      end)
+
+    changeset =
+      changeset
+      |> Ecto.Changeset.put_change(:days_of_week, days_of_week_options)
+      |> Ecto.Changeset.put_change(:start_time_input, from_utc(schedule.start_time))
+      |> Ecto.Changeset.put_change(:end_time_input, from_utc(schedule.end_time))
+
+    {:noreply,
+     socket
+     |> assign(
+       light_schedule_form: to_form(changeset, as: :light_schedule_form),
+       is_edit_light: true,
+       id_edit_light: schedule_id
+     )}
+  end
+
   def handle_event("add_bench", %{"form_add_bench" => %{"bench_id" => bench_id}}, socket) do
     Greenhouse.link_bench(socket.assigns.device.id, bench_id)
 
@@ -338,6 +463,23 @@ defmodule SistemaControleWeb.Device.Index do
            as: :irrigation_schedule_form
          ),
        is_edit: false
+     )
+     |> put_flash(:info, msg)}
+  end
+
+  def refresh_light_schedules(socket, msg) do
+    updated_schedules =
+      Light.get_light_schedules(socket.assigns.greenhouse_config.id)
+
+    {:noreply,
+     socket
+     |> assign(
+       light_schedules: updated_schedules,
+       light_schedule_form:
+         to_form(Light.change_light_schedule(%LightSchedule{}),
+           as: :light_schedule_form
+         ),
+       is_edit_light: false
      )
      |> put_flash(:info, msg)}
   end

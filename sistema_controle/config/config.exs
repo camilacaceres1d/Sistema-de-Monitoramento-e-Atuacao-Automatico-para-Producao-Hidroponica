@@ -67,11 +67,12 @@ config :sistema_controle, Oban,
     {
       Oban.Plugins.Cron,
       crontab: [
-        {"* * * * *", SistemaControle.Workers.IrrigationWorker}
+        {"* * * * *", SistemaControle.Workers.IrrigationWorker},
+        {"* * * * *", SistemaControle.Workers.LightWorker}
       ]
     }
   ],
-  queues: [irrigation: 10]
+  queues: [irrigation: 10, light: 10]
 
 config :elixir, :time_zone_database, Tzdata.TimeZoneDatabase
 

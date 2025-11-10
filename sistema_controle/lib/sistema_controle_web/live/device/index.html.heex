@@ -1,6 +1,6 @@
 <Layouts.app flash={@flash}>
   <h1 class="text-2xl font-semibold mb-6">
-    Sistema de Monitoramento de Hidroponia — {@device.name} ({@device.device_mac})
+    Sistema de Monitoramento de Hidroponia — {@device.name}
   </h1>
   <.button
     phx-click="toggle_pump"
@@ -44,6 +44,14 @@
     class="btn btn-primary  rounded-lg"
   >
     Configurar Irrigação
+  </.button>
+
+  <.button
+    phx-click="open_config_form"
+    phx-value-form={:light}
+    class="btn btn-primary  rounded-lg"
+  >
+    Configurar Luzes
   </.button>
 
   <%= if @open_config_form == :config do %>
@@ -336,6 +344,133 @@
           <:action :let={schedule}>
             <.button
               phx-click="toggle_irrigation_schedule"
+              phx-value-id={schedule.id}
+              class={
+                "btn btn-sm " <>
+                  if(schedule.active, do: "btn-warning", else: "btn-success")
+              }
+            >
+              {if schedule.active, do: "Desativar", else: "Ativar"}
+            </.button>
+          </:action>
+        </.table>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%= if @open_config_form == :light do %>
+    <div class="mb-8 p-6 bg-base rounded-lg shadow border border-base-200">
+      <h3 class="text-lg font-semibold mb-4">Configurações de Luzes</h3>
+      <.form
+        for={@light_schedule_form}
+        phx-submit={if @is_edit, do: "edit_light_schedule", else: "add_light_schedule"}
+        phx-change="validate_light_schedule"
+        class="mb-6"
+      >
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="w-full">
+            <.input
+              field={@light_schedule_form[:start_time_input]}
+              type="time"
+              label="Hora de Início"
+            />
+          </div>
+          <div class="w-full">
+            <.input
+              field={@light_schedule_form[:end_time_input]}
+              type="time"
+              label="Hora de Fim"
+            />
+          </div>
+
+          <div class="w-full">
+            <.input
+              field={@light_schedule_form[:on_seconds]}
+              type="number"
+              label="Duração ligado (segundos)"
+            />
+          </div>
+
+          <div class="w-full">
+            <.input
+              field={@light_schedule_form[:off_seconds]}
+              type="number"
+              label="Duração desligado (segundos)"
+            />
+          </div>
+
+          <div class="w-full">
+            <.input
+              field={@light_schedule_form[:days_of_week]}
+              type="multi-select"
+              label="Dias da Semana"
+              options={[
+                {"Domingo", "7"},
+                {"Segunda-feira", "1"},
+                {"Terça-feira", "2"},
+                {"Quarta-feira", "3"},
+                {"Quinta-feira", "4"},
+                {"Sexta-feira", "5"},
+                {"Sábado", "6"}
+              ]}
+            />
+          </div>
+
+          <div class="col-span-full flex justify-end">
+            <.button
+              type="submit"
+              class="btn btn-primary"
+            >
+              {if @is_edit, do: "Salvar Alterações", else: "Adicionar Agendamento"}
+            </.button>
+          </div>
+        </div>
+      </.form>
+      <%= if Enum.empty?(@light_schedules) do %>
+        <p class="my-4">Nenhum agendamento de irrigação encontrado.</p>
+      <% else %>
+        <.table id="irrgation-schedule-table" rows={@light_schedules}>
+          <:col :let={schedule} label="Início">
+            <span>{from_utc(schedule.start_time)}</span>
+          </:col>
+          <:col :let={schedule} label="Fim">
+            <span>{from_utc(schedule.end_time)}</span>
+          </:col>
+          <:col :let={schedule} label="Tempo ligado (sec)">
+            <span>{schedule.on_seconds}</span>
+          </:col>
+          <:col :let={schedule} label="Tempo desligado (sec)">
+            <span>{schedule.off_seconds}</span>
+          </:col>
+          <:col :let={schedule} label="Dias da Semana">
+            <span>
+              {Enum.map_join(schedule.days_of_week, ", ", fn day ->
+                case day do
+                  7 -> "Domingo"
+                  1 -> "Segunda-feira"
+                  2 -> "Terça-feira"
+                  3 -> "Quarta-feira"
+                  4 -> "Quinta-feira"
+                  5 -> "Sexta-feira"
+                  6 -> "Sábado"
+                end
+              end)}
+            </span>
+          </:col>
+
+          <:action :let={schedule}>
+            <.button
+              phx-click="open_edit_light_schedule"
+              phx-value-id={schedule.id}
+              class="btn btn-sm btn-secondary"
+            >
+              Editar
+            </.button>
+          </:action>
+
+          <:action :let={schedule}>
+            <.button
+              phx-click="toggle_light_schedule"
               phx-value-id={schedule.id}
               class={
                 "btn btn-sm " <>

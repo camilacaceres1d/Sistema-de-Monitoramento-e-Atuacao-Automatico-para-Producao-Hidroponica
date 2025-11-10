@@ -204,15 +204,16 @@ defmodule SistemaControle.Greenhouse do
       from(sd in SensorData,
         join: d in assoc(sd, :device),
         where: d.greenhouse_id == ^greenhouse_id and d.type == :bench,
-        order_by: [d.id, desc: sd.inserted_at],
         distinct: d.id,
+        order_by: [d.id, desc: sd.inserted_at],
         select: sd.light_state
       )
       |> Repo.all()
 
     case Enum.frequencies(latest_per_device) do
       %{true => t, false => f} when t > f -> true
-      %{true => t, false => f} when f > t -> false
+      %{true => _t, false => _f} -> false
+      %{true => _t} -> true
       _ -> false
     end
   end
