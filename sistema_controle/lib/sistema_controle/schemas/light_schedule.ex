@@ -1,6 +1,8 @@
 defmodule SistemaControle.Schemas.LightSchedule do
   use Ecto.Schema
   import Ecto.Changeset
+  import Ecto.Query
+  alias SistemaControle.Repo
 
   schema "light_schedule" do
     field(:start_time, :time)
