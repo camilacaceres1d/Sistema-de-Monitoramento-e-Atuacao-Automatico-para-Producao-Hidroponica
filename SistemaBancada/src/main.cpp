@@ -2,6 +2,8 @@
 #include <mqtt_comm.hpp>
 #include <sensors_actuators.hpp>
 
+double flow = 0;
+
 void setup() {
   Serial.begin(115200);
 
@@ -15,13 +17,13 @@ void loop() {
   network_mqtt_loop();
 
   static unsigned long lastRead = 0;
-  if (millis() - lastRead >= 5000) {
+
+  read_water_flow(flow);
+  if (millis() - lastRead >= 15000) {
 
     float airTemp, airHumidity;
-    double flow;
 
     read_air_quality(airTemp, airHumidity);
-    read_water_flow(flow);
 
     Serial.print("Water Flow: ");
     Serial.print(flow);

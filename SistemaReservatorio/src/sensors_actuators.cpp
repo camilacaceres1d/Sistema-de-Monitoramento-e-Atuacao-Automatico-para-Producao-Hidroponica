@@ -103,8 +103,7 @@ float read_ec(uint8_t pin, float temperature) {
   float compVoltage = voltage / coeff;
 
   return (133.42 * compVoltage * compVoltage * compVoltage -
-          255.86 * compVoltage * compVoltage + 857.39 * compVoltage) *
-         1.5;
+          255.86 * compVoltage * compVoltage + 857.39 * compVoltage);
 }
 
 bool read_water_presence(uint8_t pin) { return digitalRead(pin) == HIGH; }

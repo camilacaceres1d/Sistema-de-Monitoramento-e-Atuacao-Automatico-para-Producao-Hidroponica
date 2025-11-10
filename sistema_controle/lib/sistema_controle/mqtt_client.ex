@@ -12,7 +12,7 @@ defmodule SistemaControle.MqttClient do
   @impl true
   def init(_) do
     opts = [
-      host: "localhost",
+      host: "hidroponia.local",
       port: 1883,
       username: "hidroponia",
       password: "Hidroponia@123",

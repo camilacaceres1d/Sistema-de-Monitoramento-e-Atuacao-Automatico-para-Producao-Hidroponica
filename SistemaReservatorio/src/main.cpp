@@ -16,7 +16,7 @@ void loop() {
   network_mqtt_loop();
 
   static unsigned long lastRead = 0;
-  if (millis() - lastRead >= 1000) {
+  if (millis() - lastRead >= 15000) {
 
     float tempNow = read_temperature_c();
     float ec = read_ec(TDS_SENSOR_PIN, tempNow);

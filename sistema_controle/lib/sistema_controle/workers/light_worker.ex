@@ -61,7 +61,7 @@ defmodule SistemaControle.Workers.LightWorker do
         _ -> Time.diff(now, schedule.start_time, :second)
       end
 
-    cycle_duration = schedule.on_seconds + schedule.off_seconds
+    cycle_duration = schedule.on_minutes * 60 + schedule.off_minutes * 60
 
     position_in_cycle =
       rem(seconds_since_start, cycle_duration)
@@ -70,7 +70,7 @@ defmodule SistemaControle.Workers.LightWorker do
         n -> n
       end
 
-    desired_state = if position_in_cycle < schedule.on_seconds, do: true, else: false
+    desired_state = if position_in_cycle < schedule.on_minutes * 60, do: true, else: false
 
     current_state = Greenhouse.get_light_state(device.id)
 

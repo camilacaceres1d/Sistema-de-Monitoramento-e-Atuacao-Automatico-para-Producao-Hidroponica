@@ -7,8 +7,8 @@ defmodule SistemaControle.Schemas.LightSchedule do
   schema "light_schedule" do
     field(:start_time, :time)
     field(:end_time, :time)
-    field(:on_seconds, :integer)
-    field(:off_seconds, :integer)
+    field(:on_minutes, :integer)
+    field(:off_minutes, :integer)
     field(:days_of_week, {:array, :integer}, default: [1, 2, 3, 4, 5, 6, 7])
     field(:active, :boolean, default: true)
     field(:start_time_input, :time, virtual: true)
@@ -34,8 +34,8 @@ defmodule SistemaControle.Schemas.LightSchedule do
       :end_time,
       :start_time_input,
       :end_time_input,
-      :on_seconds,
-      :off_seconds,
+      :on_minutes,
+      :off_minutes,
       :days_of_week,
       :active,
       :greenhouse_config_id,
@@ -43,8 +43,8 @@ defmodule SistemaControle.Schemas.LightSchedule do
     ])
     |> validate_required(:start_time_input, message: "Hora de início é obrigatória")
     |> validate_required(:end_time_input, message: "Hora de fim é obrigatória")
-    |> validate_required(:on_seconds, message: "Tempo ligado é obrigatório")
-    |> validate_required(:off_seconds, message: "Tempo desligado é obrigatório")
+    |> validate_required(:on_minutes, message: "Tempo ligado é obrigatório")
+    |> validate_required(:off_minutes, message: "Tempo desligado é obrigatório")
     |> validate_days_of_week()
     |> validate_start_end()
     |> validate_required([:greenhouse_config_id])

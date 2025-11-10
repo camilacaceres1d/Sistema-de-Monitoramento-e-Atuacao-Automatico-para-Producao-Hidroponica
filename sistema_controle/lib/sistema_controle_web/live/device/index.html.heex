@@ -258,17 +258,17 @@
 
           <div class="w-full">
             <.input
-              field={@irrigation_schedule_form[:on_seconds]}
+              field={@irrigation_schedule_form[:on_minutes]}
               type="number"
-              label="Duração ligado (segundos)"
+              label="Duração ligado (minutos)"
             />
           </div>
 
           <div class="w-full">
             <.input
-              field={@irrigation_schedule_form[:off_seconds]}
+              field={@irrigation_schedule_form[:off_minutes]}
               type="number"
-              label="Duração desligado (segundos)"
+              label="Duração desligado (minutos)"
             />
           </div>
 
@@ -309,11 +309,11 @@
           <:col :let={schedule} label="Fim">
             <span>{from_utc(schedule.end_time)}</span>
           </:col>
-          <:col :let={schedule} label="Tempo ligado (sec)">
-            <span>{schedule.on_seconds}</span>
+          <:col :let={schedule} label="Tempo ligado (min)">
+            <span>{schedule.on_minutes}</span>
           </:col>
-          <:col :let={schedule} label="Tempo desligado (sec)">
-            <span>{schedule.off_seconds}</span>
+          <:col :let={schedule} label="Tempo desligado (min)">
+            <span>{schedule.off_minutes}</span>
           </:col>
           <:col :let={schedule} label="Dias da Semana">
             <span>
@@ -385,17 +385,17 @@
 
           <div class="w-full">
             <.input
-              field={@light_schedule_form[:on_seconds]}
+              field={@light_schedule_form[:on_minutes]}
               type="number"
-              label="Duração ligado (segundos)"
+              label="Duração ligado (minutos)"
             />
           </div>
 
           <div class="w-full">
             <.input
-              field={@light_schedule_form[:off_seconds]}
+              field={@light_schedule_form[:off_minutes]}
               type="number"
-              label="Duração desligado (segundos)"
+              label="Duração desligado (minutos)"
             />
           </div>
 
@@ -436,11 +436,11 @@
           <:col :let={schedule} label="Fim">
             <span>{from_utc(schedule.end_time)}</span>
           </:col>
-          <:col :let={schedule} label="Tempo ligado (sec)">
-            <span>{schedule.on_seconds}</span>
+          <:col :let={schedule} label="Tempo ligado (min)">
+            <span>{schedule.on_minutes}</span>
           </:col>
-          <:col :let={schedule} label="Tempo desligado (sec)">
-            <span>{schedule.off_seconds}</span>
+          <:col :let={schedule} label="Tempo desligado (min)">
+            <span>{schedule.off_minutes}</span>
           </:col>
           <:col :let={schedule} label="Dias da Semana">
             <span>

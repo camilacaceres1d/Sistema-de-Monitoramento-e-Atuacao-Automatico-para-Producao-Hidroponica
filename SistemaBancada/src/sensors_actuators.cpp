@@ -7,7 +7,6 @@ static bool lightOn = false;
 DHT_Unified dht(AIR_QUALITY_SENSOR_PIN, DHTTYPE);
 
 volatile int counter_water_flow = 0;
-double water_flow = 0.0;
 
 void IRAM_ATTR flow_pulse_counter() { counter_water_flow++; }
 
@@ -25,16 +24,17 @@ void sensors_init() {
 void read_water_flow(double &flow) {
   static unsigned long last_time = 0;
   unsigned long current_time = millis();
-  if (current_time - last_time >= 1000) {
+  unsigned long elapsed = current_time - last_time;
+  if (elapsed >= 1000) {
     noInterrupts();
     int pulse_count = counter_water_flow;
     counter_water_flow = 0;
     interrupts();
 
-    water_flow = (pulse_count / WATER_FLOW_CALIBRATION_FACTOR);
+    float seconds = elapsed / 1000.0;
+    flow = (pulse_count / WATER_FLOW_CALIBRATION_FACTOR) / seconds;
     last_time = current_time;
   }
-  flow = water_flow;
 }
 
 void read_air_quality(float &temperature, float &humidity) {

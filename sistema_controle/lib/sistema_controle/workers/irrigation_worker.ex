@@ -61,7 +61,7 @@ defmodule SistemaControle.Workers.IrrigationWorker do
         _ -> Time.diff(now, schedule.start_time, :second)
       end
 
-    cycle_duration = schedule.on_seconds + schedule.off_seconds
+    cycle_duration = schedule.on_minutes * 60 + schedule.off_minutes * 60
 
     position_in_cycle =
       rem(seconds_since_start, cycle_duration)
@@ -70,7 +70,7 @@ defmodule SistemaControle.Workers.IrrigationWorker do
         n -> n
       end
 
-    desired_state = if position_in_cycle < schedule.on_seconds, do: :on, else: :off
+    desired_state = if position_in_cycle < schedule.on_minutes * 60, do: :on, else: :off
 
     current_state = get_pump_state(device.id)
 
