@@ -311,7 +311,7 @@
             <span>
               {Enum.map_join(schedule.days_of_week, ", ", fn day ->
                 case day do
-                  0 -> "Domingo"
+                  7 -> "Domingo"
                   1 -> "Segunda-feira"
                   2 -> "Terça-feira"
                   3 -> "Quarta-feira"

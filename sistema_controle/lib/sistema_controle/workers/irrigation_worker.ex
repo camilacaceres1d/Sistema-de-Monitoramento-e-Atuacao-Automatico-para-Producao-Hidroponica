@@ -39,38 +39,41 @@ defmodule SistemaControle.Workers.IrrigationWorker do
   end
 
   defp should_be_on?(%IrrigationSchedule{} = schedule, now, today) do
-    today in schedule.days_of_week and
-      Time.compare(now, schedule.start_time) != :lt and
-      Time.compare(now, schedule.end_time) == :lt
+    start_time = schedule.start_time
+    end_time = schedule.end_time
+
+    in_time_window =
+      if Time.compare(end_time, start_time) == :lt do
+        Time.compare(now, start_time) != :lt or Time.compare(now, end_time) == :lt
+      else
+        Time.compare(now, start_time) != :lt and Time.compare(now, end_time) == :lt
+      end
+
+    today in schedule.days_of_week and in_time_window
   end
 
   defp control_pump(%IrrigationSchedule{} = schedule, %Device{} = device, now) do
     seconds_since_start =
-      Time.diff(now, schedule.start_time, :second)
+      case Time.compare(now, schedule.start_time) do
+        :lt -> Time.diff(Time.add(now, 86_400, :second), schedule.start_time, :second)
+        _ -> Time.diff(now, schedule.start_time, :second)
+      end
 
     cycle_duration = schedule.on_seconds + schedule.off_seconds
 
-    position_in_cycle = rem(seconds_since_start, cycle_duration)
-
-    desired_state =
-      if position_in_cycle < schedule.on_seconds do
-        :on
-      else
-        :off
+    position_in_cycle =
+      rem(seconds_since_start, cycle_duration)
+      |> case do
+        n when n < 0 -> n + cycle_duration
+        n -> n
       end
+
+    desired_state = if position_in_cycle < schedule.on_seconds, do: :on, else: :off
 
     current_state = get_pump_state(device.id)
 
     if desired_state != current_state do
-      device = Greenhouse.get_device_from_config(device.id)
-
-      case desired_state do
-        :on ->
-          Greenhouse.set_pump_state(device, true)
-
-        :off ->
-          Greenhouse.set_pump_state(device, false)
-      end
+      Greenhouse.set_pump_state(device, desired_state == :on)
     end
   end
 

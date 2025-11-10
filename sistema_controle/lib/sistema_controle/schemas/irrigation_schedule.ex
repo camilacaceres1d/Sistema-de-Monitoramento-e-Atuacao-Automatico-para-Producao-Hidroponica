@@ -85,7 +85,7 @@ defmodule SistemaControle.Schemas.IrrigationSchedule do
       Enum.empty?(days) ->
         add_error(changeset, :days_of_week, "Selecione pelo menos um dia da semana")
 
-      Enum.any?(days, fn day -> day < 0 or day > 6 end) ->
+      Enum.any?(days, fn day -> day < 1 or day > 7 end) ->
         add_error(
           changeset,
           :days_of_week,
