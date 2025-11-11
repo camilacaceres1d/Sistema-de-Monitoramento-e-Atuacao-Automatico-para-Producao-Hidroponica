@@ -462,7 +462,8 @@ defmodule SistemaControleWeb.Device.Index do
          to_form(Irrigation.change_irrigation_schedule(%IrrigationSchedule{}),
            as: :irrigation_schedule_form
          ),
-       is_edit: false
+       is_edit: false,
+       id_edit: nil
      )
      |> put_flash(:info, msg)}
   end
@@ -479,7 +480,8 @@ defmodule SistemaControleWeb.Device.Index do
          to_form(Light.change_light_schedule(%LightSchedule{}),
            as: :light_schedule_form
          ),
-       is_edit_light: false
+       is_edit_light: false,
+       id_edit_light: nil
      )
      |> put_flash(:info, msg)}
   end
@@ -495,32 +497,46 @@ defmodule SistemaControleWeb.Device.Index do
     }
   end
 
+  def from_utc(%NaiveDateTime{} = time) do
+    total_seconds = time.hour * 3600 + time.minute * 60 + time.second
+    local_seconds = rem(total_seconds - 3 * 3600 + 24 * 3600, 24 * 3600)
+
+    %NaiveDateTime{
+      day: time.day,
+      year: time.year,
+      month: time.month,
+      hour: div(local_seconds, 3600),
+      minute: div(rem(local_seconds, 3600), 60),
+      second: rem(local_seconds, 60)
+    }
+  end
+
   defp push_charts(socket, sensor_data) do
     datasets = %{
       "pH" =>
         sensor_data
         |> Enum.filter(& &1.ph)
-        |> Enum.map(fn r -> %{x: r.inserted_at, y: r.ph} end),
+        |> Enum.map(fn r -> %{x: from_utc(r.inserted_at), y: r.ph} end),
       "EC" =>
         sensor_data
         |> Enum.filter(& &1.ec)
-        |> Enum.map(fn r -> %{x: r.inserted_at, y: r.ec} end),
+        |> Enum.map(fn r -> %{x: from_utc(r.inserted_at), y: r.ec} end),
       "Temperatura da Água" =>
         sensor_data
         |> Enum.filter(& &1.water_temperature)
-        |> Enum.map(fn r -> %{x: r.inserted_at, y: r.water_temperature} end),
+        |> Enum.map(fn r -> %{x: from_utc(r.inserted_at), y: r.water_temperature} end),
       "Temperatura do Ar" =>
         sensor_data
         |> Enum.filter(& &1.air_temperature)
-        |> Enum.map(fn r -> %{x: r.inserted_at, y: r.air_temperature} end),
+        |> Enum.map(fn r -> %{x: from_utc(r.inserted_at), y: r.air_temperature} end),
       "Umidade do Ar" =>
         sensor_data
         |> Enum.filter(& &1.air_humidity)
-        |> Enum.map(fn r -> %{x: r.inserted_at, y: r.air_humidity} end),
+        |> Enum.map(fn r -> %{x: from_utc(r.inserted_at), y: r.air_humidity} end),
       "Fluxo de água" =>
         sensor_data
         |> Enum.filter(& &1.water_flow)
-        |> Enum.map(fn r -> %{x: r.inserted_at, y: r.water_flow} end)
+        |> Enum.map(fn r -> %{x: from_utc(r.inserted_at), y: r.water_flow} end)
     }
 
     Enum.reduce(datasets, socket, fn {key, data}, sock ->

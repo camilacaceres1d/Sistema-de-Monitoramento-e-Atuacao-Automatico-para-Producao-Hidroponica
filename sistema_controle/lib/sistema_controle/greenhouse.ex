@@ -103,7 +103,8 @@ defmodule SistemaControle.Greenhouse do
         latest_sensor_data: latest_sensor_data,
         avg_air_temp: avg_bench && avg_bench.avg_air_temp,
         avg_air_humidity: avg_bench && avg_bench.avg_air_humidity,
-        avg_water_flow: avg_bench && avg_bench.avg_water_flow
+        avg_water_flow: avg_bench && avg_bench.avg_water_flow,
+        light_state: get_light_state(greenhouse.device_id)
       }
     end)
   end
@@ -259,7 +260,8 @@ defmodule SistemaControle.Greenhouse do
           latest_sensor_data: sensor_data,
           avg_air_temp: avg_data.avg_air_temp,
           avg_air_humidity: avg_data.avg_air_humidity,
-          avg_water_flow: avg_data.avg_water_flow
+          avg_water_flow: avg_data.avg_water_flow,
+          light_state: get_light_state(device_id)
         }
 
         broadcast_all({:greenhouse_update, item})

@@ -363,7 +363,7 @@
       <h3 class="text-lg font-semibold mb-4">Configurações de Luzes</h3>
       <.form
         for={@light_schedule_form}
-        phx-submit={if @is_edit, do: "edit_light_schedule", else: "add_light_schedule"}
+        phx-submit={if @is_edit_light, do: "edit_light_schedule", else: "add_light_schedule"}
         phx-change="validate_light_schedule"
         class="mb-6"
       >
@@ -421,7 +421,7 @@
               type="submit"
               class="btn btn-primary"
             >
-              {if @is_edit, do: "Salvar Alterações", else: "Adicionar Agendamento"}
+              {if @is_edit_light, do: "Salvar Alterações", else: "Adicionar Agendamento"}
             </.button>
           </div>
         </div>

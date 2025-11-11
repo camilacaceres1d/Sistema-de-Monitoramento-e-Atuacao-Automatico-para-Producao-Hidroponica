@@ -18,7 +18,8 @@ defmodule SistemaControleWeb.Dashboard.Index do
           latest_sensor_data: item.latest_sensor_data,
           avg_air_temp: item.avg_air_temp,
           avg_air_humidity: item.avg_air_humidity,
-          avg_water_flow: item.avg_water_flow
+          avg_water_flow: item.avg_water_flow,
+          light_state: item.light_state
         }
       end)
 
@@ -57,6 +58,6 @@ defmodule SistemaControleWeb.Dashboard.Index do
   end
 
   defp format_value(nil), do: "-"
-  defp format_value(value) when is_float(value), do: :erlang.float_to_binary(value, decimals: 1)
+  defp format_value(value) when is_float(value), do: :erlang.float_to_binary(value, decimals: 2)
   defp format_value(value), do: value
 end
