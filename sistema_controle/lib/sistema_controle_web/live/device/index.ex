@@ -540,7 +540,7 @@ defmodule SistemaControleWeb.Device.Index do
     }
 
     Enum.reduce(datasets, socket, fn {key, data}, sock ->
-      opts = build_chart_options(key, data)
+      opts = build_chart_options(key, data, socket.assigns.greenhouse_config)
       push_event(sock, "chart-update-#{key}", opts)
     end)
   end
@@ -555,39 +555,97 @@ defmodule SistemaControleWeb.Device.Index do
     "#{day}/#{month} #{hour}:#{minute}:#{second}"
   end
 
-  defp build_chart_options(name, data) do
+  defp build_chart_options(name, data, config) do
     cleaned_data =
       data
       |> Enum.reject(&is_nil(&1.y))
       |> Enum.sort_by(& &1.x)
 
+    x_data = Enum.map(cleaned_data, &format_datetime_br(&1.x))
+    y_real = Enum.map(cleaned_data, & &1.y)
+
+    {min, ideal, max} =
+      case name do
+        "pH" ->
+          {config.min_ph, config.ideal_ph, config.max_ph}
+
+        "EC" ->
+          {config.min_ec, config.ideal_ec, config.max_ec}
+
+        "Temperatura da Água" ->
+          {config.min_water_temp, config.ideal_water_temp, config.max_water_temp}
+
+        "Temperatura do Ar" ->
+          {config.min_air_temp, config.ideal_air_temp, config.max_air_temp}
+
+        "Umidade do Ar" ->
+          {config.min_air_humidity, config.ideal_air_humidity, config.max_air_humidity}
+
+        _ ->
+          {nil, nil, nil}
+      end
+
     %{
       tooltip: %{
         trigger: "axis",
         formatter:
-          "function(params) { if (!params || params.length === 0) return ''; const date = params[0].name; const value = params[0].value; return date + '<br/>' + params[0].seriesName + ': ' + value; }"
+          "function(params) { if(!params || params.length === 0) return ''; const date = params[0].name; const value = params[0].value; const color = params[0].color; return '<span style=\"color:' + color + '\">•</span> ' + date + '<br/>' + params[0].seriesName + ': ' + value; }"
+      },
+      legend: %{
+        data: [name, "Mínimo", "Ideal", "Máximo"],
+        icon: "pin"
       },
       xAxis: %{
         type: "category",
         boundaryGap: false,
-        data: Enum.map(cleaned_data, &format_datetime_br(&1.x)),
+        data: x_data,
         axisLabel: %{rotate: 45, fontSize: 10}
       },
       yAxis: %{type: "value", name: name},
       grid: %{left: "10%", right: "5%", bottom: "40", top: "15%", containLabel: true},
-      series: [
-        %{
-          name: name,
-          type: "line",
-          data: Enum.map(cleaned_data, & &1.y),
-          smooth: true,
-          symbol: "circle",
-          symbolSize: 4,
-          lineStyle: %{width: 2},
-          animation: true,
-          animationDuration: 300
-        }
-      ]
+      series:
+        [
+          %{
+            name: name,
+            type: "line",
+            data: y_real,
+            smooth: true,
+            showSymbol: false,
+            lineStyle: %{width: 3, color: "#2C3E50"},
+            animation: true,
+            animationDuration: 300
+          }
+        ] ++
+          if min && ideal && max do
+            [
+              %{
+                name: "Mínimo",
+                type: "line",
+                showSymbol: false,
+                lineStyle: %{type: "solid", color: "#FF6347", opacity: 0.5},
+                itemStyle: %{color: "#FF6347"},
+                data: List.duplicate(min, length(y_real))
+              },
+              %{
+                name: "Ideal",
+                type: "line",
+                showSymbol: false,
+                lineStyle: %{type: "dashed", color: "#2ECC71", opacity: 0.5},
+                itemStyle: %{color: "#2ECC71"},
+                data: List.duplicate(ideal, length(y_real))
+              },
+              %{
+                name: "Máximo",
+                type: "line",
+                showSymbol: false,
+                lineStyle: %{type: "dashed", color: "#3498DB", opacity: 0.5},
+                itemStyle: %{color: "#3498DB"},
+                data: List.duplicate(max, length(y_real))
+              }
+            ]
+          else
+            []
+          end
     }
   end
 end
