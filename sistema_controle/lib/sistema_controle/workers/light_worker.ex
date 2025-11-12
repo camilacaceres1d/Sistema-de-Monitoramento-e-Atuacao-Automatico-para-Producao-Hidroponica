@@ -44,7 +44,7 @@ defmodule SistemaControle.Workers.LightWorker do
   defp should_be_on?(schedules, now, today) do
     in_time_windows_schedules =
       Enum.filter(schedules, fn schedule ->
-        schedules.days_of_week |> Enum.member?(today) and
+        schedule.days_of_week |> Enum.member?(today) and
           cond do
             Time.compare(schedule.end_time, schedule.start_time) == :lt ->
               Time.compare(now, schedule.start_time) != :lt or
