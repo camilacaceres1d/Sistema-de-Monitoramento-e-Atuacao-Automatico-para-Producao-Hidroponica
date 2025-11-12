@@ -20,15 +20,18 @@ defmodule SistemaControle.Workers.LightWorker do
       |> DateTime.to_date()
       |> Date.day_of_week()
 
-    from(s in LightSchedule,
-      where: s.active == true and ^today in s.days_of_week
-    )
-    |> Repo.all()
+    schedules =
+      from(s in LightSchedule,
+        where: s.active == true and ^today in s.days_of_week
+      )
+      |> Repo.all()
+
+    schedules
     |> Enum.each(fn %LightSchedule{} = schedule ->
       device = Greenhouse.get_device_from_config(schedule.greenhouse_config_id)
       light_state = Greenhouse.get_light_state(device.id)
 
-      if should_be_on?(schedule, now, today) do
+      if should_be_on?(schedules, now, today) do
         control_light(schedule, device, now)
       else
         if light_state do
@@ -38,20 +41,22 @@ defmodule SistemaControle.Workers.LightWorker do
     end)
   end
 
-  defp should_be_on?(%LightSchedule{} = schedule, now, today) do
-    start_time = schedule.start_time
-    end_time = schedule.end_time
+  defp should_be_on?(schedules, now, today) do
+    in_time_windows_schedules =
+      Enum.filter(schedules, fn schedule ->
+        schedules.days_of_week |> Enum.member?(today) and
+          cond do
+            Time.compare(schedule.end_time, schedule.start_time) == :lt ->
+              Time.compare(now, schedule.start_time) != :lt or
+                Time.compare(now, schedule.end_time) == :lt
 
-    in_time_window =
-      cond do
-        Time.compare(end_time, start_time) == :lt ->
-          Time.compare(now, start_time) != :lt or Time.compare(now, end_time) == :lt
+            true ->
+              Time.compare(now, schedule.start_time) != :lt and
+                Time.compare(now, schedule.end_time) == :lt
+          end
+      end)
 
-        true ->
-          Time.compare(now, start_time) != :lt and Time.compare(now, end_time) == :lt
-      end
-
-    today in schedule.days_of_week and in_time_window
+    Enum.any?(in_time_windows_schedules)
   end
 
   defp control_light(%LightSchedule{} = schedule, %Device{} = device, now) do

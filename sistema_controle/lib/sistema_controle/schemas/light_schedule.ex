@@ -48,7 +48,7 @@ defmodule SistemaControle.Schemas.LightSchedule do
     |> validate_days_of_week()
     |> validate_start_end()
     |> validate_required([:greenhouse_config_id])
-    |> validate_unique_days()
+    |> validate_overlapping_hours()
   end
 
   def validate_start_end(changeset) do
@@ -101,16 +101,23 @@ defmodule SistemaControle.Schemas.LightSchedule do
     end
   end
 
-  def validate_unique_days(changeset) do
+  def validate_overlapping_hours(changeset) do
     greenhouse_config_id = get_field(changeset, :greenhouse_config_id)
     days_of_week = get_field(changeset, :days_of_week, [])
     current_id = get_field(changeset, :id)
+    start_time = get_field(changeset, :start_time_input)
+    end_time = get_field(changeset, :end_time_input)
 
-    if greenhouse_config_id && days_of_week != [] do
+    if greenhouse_config_id && start_time && end_time && days_of_week != [] do
       base_query =
         from(s in __MODULE__,
           where: s.greenhouse_config_id == ^greenhouse_config_id and s.active == true,
-          select: s.days_of_week
+          select: %{
+            id: s.id,
+            start_time: s.start_time,
+            end_time: s.end_time,
+            days_of_week: s.days_of_week
+          }
         )
 
       query =
@@ -122,16 +129,22 @@ defmodule SistemaControle.Schemas.LightSchedule do
 
       existing_schedules = Repo.all(query)
 
-      overlapping_days? =
-        Enum.any?(existing_schedules, fn existing_days ->
-          Enum.any?(existing_days, &(&1 in days_of_week))
+      overlapping? =
+        Enum.any?(existing_schedules, fn schedule ->
+          same_day? = Enum.any?(schedule.days_of_week, &(&1 in days_of_week))
+
+          overlap? =
+            Time.compare(start_time, from_utc(schedule.end_time)) == :lt and
+              Time.compare(end_time, from_utc(schedule.start_time)) == :gt
+
+          same_day? and overlap?
         end)
 
-      if overlapping_days? do
+      if overlapping? do
         add_error(
           changeset,
-          :days_of_week,
-          "Já existe um cronograma com dias sobrepostos para esta estufa"
+          :start_time_input,
+          "Já existe um cronograma com horário sobreposto para esta estufa"
         )
       else
         changeset
@@ -139,5 +152,30 @@ defmodule SistemaControle.Schemas.LightSchedule do
     else
       changeset
     end
+  end
+
+  def from_utc(%Time{} = time) do
+    total_seconds = time.hour * 3600 + time.minute * 60 + time.second
+    local_seconds = rem(total_seconds - 3 * 3600 + 24 * 3600, 24 * 3600)
+
+    %Time{
+      hour: div(local_seconds, 3600),
+      minute: div(rem(local_seconds, 3600), 60),
+      second: rem(local_seconds, 60)
+    }
+  end
+
+  def from_utc(%NaiveDateTime{} = time) do
+    total_seconds = time.hour * 3600 + time.minute * 60 + time.second
+    local_seconds = rem(total_seconds - 3 * 3600 + 24 * 3600, 24 * 3600)
+
+    %NaiveDateTime{
+      day: time.day,
+      year: time.year,
+      month: time.month,
+      hour: div(local_seconds, 3600),
+      minute: div(rem(local_seconds, 3600), 60),
+      second: rem(local_seconds, 60)
+    }
   end
 end

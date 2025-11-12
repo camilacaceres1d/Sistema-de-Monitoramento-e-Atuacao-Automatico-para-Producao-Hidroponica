@@ -20,15 +20,18 @@ defmodule SistemaControle.Workers.IrrigationWorker do
       |> DateTime.to_date()
       |> Date.day_of_week()
 
-    from(s in IrrigationSchedule,
-      where: s.active == true and ^today in s.days_of_week
-    )
-    |> Repo.all()
+    schedules =
+      from(s in IrrigationSchedule,
+        where: s.active == true and ^today in s.days_of_week
+      )
+      |> Repo.all()
+
+    schedules
     |> Enum.each(fn %IrrigationSchedule{} = schedule ->
       device = Greenhouse.get_device_from_config(schedule.greenhouse_config_id)
       pump_state = get_pump_state(device.id)
 
-      if should_be_on?(schedule, now, today) do
+      if should_be_on?(schedules, now, today) do
         control_pump(schedule, device, now)
       else
         if pump_state == :on do
@@ -38,20 +41,22 @@ defmodule SistemaControle.Workers.IrrigationWorker do
     end)
   end
 
-  defp should_be_on?(%IrrigationSchedule{} = schedule, now, today) do
-    start_time = schedule.start_time
-    end_time = schedule.end_time
+  defp should_be_on?(schedules, now, today) do
+    in_time_windows_schedules =
+      Enum.filter(schedules, fn schedule ->
+        schedules.days_of_week |> Enum.member?(today) and
+          cond do
+            Time.compare(schedule.end_time, schedule.start_time) == :lt ->
+              Time.compare(now, schedule.start_time) != :lt or
+                Time.compare(now, schedule.end_time) == :lt
 
-    in_time_window =
-      cond do
-        Time.compare(end_time, start_time) == :lt ->
-          Time.compare(now, start_time) != :lt or Time.compare(now, end_time) == :lt
+            true ->
+              Time.compare(now, schedule.start_time) != :lt and
+                Time.compare(now, schedule.end_time) == :lt
+          end
+      end)
 
-        true ->
-          Time.compare(now, start_time) != :lt and Time.compare(now, end_time) == :lt
-      end
-
-    today in schedule.days_of_week and in_time_window
+    Enum.any?(in_time_windows_schedules)
   end
 
   defp control_pump(%IrrigationSchedule{} = schedule, %Device{} = device, now) do
