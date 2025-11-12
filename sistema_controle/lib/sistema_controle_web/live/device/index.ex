@@ -648,4 +648,22 @@ defmodule SistemaControleWeb.Device.Index do
           end
     }
   end
+
+  defp format_level(nil), do: ""
+
+  defp format_level(value) do
+    case value do
+      true -> "Com água"
+      false -> "Sem água"
+    end
+  end
+
+  defp get_level_color(nil), do: ""
+
+  defp get_level_color(value) do
+    case value do
+      true -> "bg-green-100 text-green-800 border border-green-300"
+      false -> "bg-red-100 text-red-800 border border-red-300"
+    end
+  end
 end

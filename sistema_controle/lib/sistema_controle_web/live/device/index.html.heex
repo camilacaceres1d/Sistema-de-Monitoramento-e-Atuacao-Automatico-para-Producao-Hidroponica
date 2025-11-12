@@ -530,9 +530,15 @@
             else: if(data.light_state, do: "Ligada", else: "Desligada")}
         </span>
       </:col>
-      <:col :let={{_id, data}} label="Nível 0"><span>{data.level0}</span></:col>
-      <:col :let={{_id, data}} label="Nível 1"><span>{data.level1}</span></:col>
-      <:col :let={{_id, data}} label="Nível 2"><span>{data.level2}</span></:col>
+      <:col :let={{_id, data}} label="Nível 1">
+        <span class={get_level_color(data.level0)}>{format_level(data.level0)}</span>
+      </:col>
+      <:col :let={{_id, data}} label="Nível 2">
+        <span class={get_level_color(data.level1)}>{format_level(data.level1)}</span>
+      </:col>
+      <:col :let={{_id, data}} label="Nível 3">
+        <span class={get_level_color(data.level2)}>{format_level(data.level2)}</span>
+      </:col>
       <:col :let={{_id, data}} label="Temp. do Ar (°C)">
         <span>{data.air_temperature}</span>
       </:col>

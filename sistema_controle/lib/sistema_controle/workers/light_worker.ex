@@ -62,8 +62,16 @@ defmodule SistemaControle.Workers.LightWorker do
   defp control_light(%LightSchedule{} = schedule, %Device{} = device, now) do
     seconds_since_start =
       case Time.compare(now, schedule.start_time) do
-        :lt -> Time.diff(Time.add(now, 86_400, :second), schedule.start_time, :second)
-        _ -> Time.diff(now, schedule.start_time, :second)
+        :lt ->
+          Time.diff(Time.add(now, 86_400, :second), schedule.start_time, :second)
+
+        _ ->
+          diff = Time.diff(now, schedule.start_time, :second)
+
+          case Time.compare(schedule.start_time, schedule.end_time) do
+            :gt -> rem(diff, 86_400)
+            _ -> diff
+          end
       end
 
     cycle_duration = schedule.on_minutes * 60 + schedule.off_minutes * 60
@@ -79,8 +87,6 @@ defmodule SistemaControle.Workers.LightWorker do
 
     current_state = Greenhouse.get_light_state(device.id)
 
-    if desired_state != current_state do
-      Greenhouse.toggle_lights(device.id, desired_state)
-    end
+    Greenhouse.toggle_lights(device.id, desired_state)
   end
 end

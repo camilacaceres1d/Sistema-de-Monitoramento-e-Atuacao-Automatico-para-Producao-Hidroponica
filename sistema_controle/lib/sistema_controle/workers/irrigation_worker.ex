@@ -44,7 +44,7 @@ defmodule SistemaControle.Workers.IrrigationWorker do
   defp should_be_on?(schedules, now, today) do
     in_time_windows_schedules =
       Enum.filter(schedules, fn schedule ->
-        schedule.days_of_week |> Enum.member?(today) &&
+        schedule.days_of_week |> Enum.member?(today) and
           cond do
             Time.compare(schedule.end_time, schedule.start_time) == :lt ->
               Time.compare(now, schedule.start_time) != :lt or
@@ -62,8 +62,16 @@ defmodule SistemaControle.Workers.IrrigationWorker do
   defp control_pump(%IrrigationSchedule{} = schedule, %Device{} = device, now) do
     seconds_since_start =
       case Time.compare(now, schedule.start_time) do
-        :lt -> Time.diff(Time.add(now, 86_400, :second), schedule.start_time, :second)
-        _ -> Time.diff(now, schedule.start_time, :second)
+        :lt ->
+          Time.diff(Time.add(now, 86_400, :second), schedule.start_time, :second)
+
+        _ ->
+          diff = Time.diff(now, schedule.start_time, :second)
+
+          case Time.compare(schedule.start_time, schedule.end_time) do
+            :gt -> rem(diff, 86_400)
+            _ -> diff
+          end
       end
 
     cycle_duration = schedule.on_minutes * 60 + schedule.off_minutes * 60
@@ -77,11 +85,7 @@ defmodule SistemaControle.Workers.IrrigationWorker do
 
     desired_state = if position_in_cycle < schedule.on_minutes * 60, do: :on, else: :off
 
-    current_state = get_pump_state(device.id)
-
-    if desired_state != current_state do
-      Greenhouse.set_pump_state(device, desired_state == :on)
-    end
+    Greenhouse.set_pump_state(device, desired_state == :on)
   end
 
   defp get_pump_state(device_id) do
